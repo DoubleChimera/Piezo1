@@ -16,7 +16,11 @@ output[divisby3] = a[divisby3]
 
 print(output)
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 print('test1')
+=======
+print('test')
+>>>>>>> Stashed changes
 =======
 print('test')
 >>>>>>> Stashed changes
