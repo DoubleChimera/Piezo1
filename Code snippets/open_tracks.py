@@ -3,8 +3,7 @@ import json, codecs
 
 def open_tracks(filename):
     """
-    returns txy_pts y
-    and tracks extracted from a .json file saved by flika's pynsight plugin
+    returns txy_pts and tracks extracted from a .json file saved by flika's pynsight plugin
 
     txy_pts is a 2D array. Every row is a particle localization. The columns are [t, x, y], where t is the frame the
     particle was localized in. x and y are the coordinates of the center of the particle determined by a 2D gaussian
