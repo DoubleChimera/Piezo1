@@ -7,4 +7,3 @@
 # todo         the plot to indicate status
 # todo Step 5: With selected points, calculate RMSD and plot, for all tracks
 # todo NOTE    Make sure there are relevant outputs produced at each step into a useful folder name, consider toggling these outputs somehow
-# 
