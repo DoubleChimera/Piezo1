@@ -45,7 +45,7 @@ def open_tracks(filename):
 
 def gen_indiv_tracks(save_path, minfrm):
     """
-    returns lst[] and lstnan[] 
+    returns lst[] and lstnan[]
     lst[] is extracted from a .json file saved by flika's pynsight plugin with
     track lengths greater than the minfrm (minimum frame) value.
     lstnan[] has blank tracks filled with nan values
@@ -79,13 +79,13 @@ def gen_indiv_tracks(save_path, minfrm):
 
     # make list of tracks with >= min number frames
     lst = []
-    
+
     for i in range(0,(numTracks)):
         track = tracks[i]
         pts = txy_pts[track, :]
         if len(pts) >= minfrm:
             lst.append(pts)
-    
+
     lstnan = np.copy(lst)
 
     for k in range(0,len(lst)):
