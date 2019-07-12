@@ -98,7 +98,7 @@ def gen_indiv_tracks(save_path, minfrm):
     # fill in missing frames with NaN values 
         totalnumber = (lstnan[k][-1][0] + 1)
         missing = sorted(list(set(range(int(totalnumber))) - set(lstnan[k][:,0])))
-        for index, elem in enumerate(missing):
+        for elem in missing:
             lstnan[k] = np.insert(lstnan[k], elem, [[elem, nan, nan]], axis = 0)
     return lst, lstnan
 
@@ -110,7 +110,8 @@ if __name__ == '__main__':
     save_path = 'C:/temp'
     minfrm = 20
     lst, lstnan = gen_indiv_tracks(save_path, minfrm)
-
+    print(lst[0])
+    print(lstnan[0])
 # * Current Debugging code begins below this point
 # * ----------------------------------------------------------------------------
 # *
