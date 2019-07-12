@@ -1,7 +1,11 @@
 # -*- coding: utf-8 -*-
 
-# todo Step 1:  Load a .json file, a corresponding .tif file, set an output directory,
-# todo          and take in initial inputs for the file
+# todo  Step 1:     Load a .json file, a corresponding .tif file, set an output directory,
+# todo              and take in initial inputs for the file
+# todo
+# ?                 What has been done?
+# todo              A .json is loaded into a list of arrays corresponding to each track
+# todo              --Now need to fill in skipped frames with NaN values
 
 import codecs
 import json
@@ -93,4 +97,14 @@ if __name__ == '__main__':
     minfrm = 20
     lst = gen_indiv_tracks(save_path, minfrm)
 
-print(len(lst))
+# * Debugging code begins below
+
+i = 1
+print(lst[i])
+print("Length = {}".format(str(len(lst[i]))))
+
+# todo in track1, point index 85 is missing and needs to be replaced with a NaN value
+
+# if the length of the array is the same as the last indexed value, no points were skipped,
+# and no edits need to be made
+# if the length differs, we need to find the inconsistent points and insert a NaN value
