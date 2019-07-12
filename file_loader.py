@@ -110,11 +110,14 @@ if __name__ == '__main__':
     save_path = 'C:/temp'
     minfrm = 20
     lst, lstnan = gen_indiv_tracks(save_path, minfrm)
-    print(lst[0])
-    print(lstnan[0])
+
+
 # * Current Debugging code begins below this point
 # * ----------------------------------------------------------------------------
-# *
+
+# print(lst[0])
+# print(lstnan[0])
+
 # * ----------------------------------------------------------------------------
 
 # ! ----------------------------------------------------------------------------
