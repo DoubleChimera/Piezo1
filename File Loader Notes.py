@@ -1,7 +1,7 @@
 #
 # todo Step 1:  Load a .json file, a corresponding .tif file, set an output directory,
 # todo          and take in initial inputs for the file
-# todo Step 2:  Convert the .json file into a numpy array, find and fill any blank spots with a NaN value
+# //   Step 2:  Convert the .json file into a numpy array, find and fill any blank spots with a NaN value
 # todo Step 3:  Grab the first frame of the .tif file and display, plot all tracks on top of .tif
 # todo          (color code by length), and provide relevant stats, such as number of frames and length of trajectory.
 # todo          Leave room for future to adjust .tif picture quality (brightness, contrast, etc.)
