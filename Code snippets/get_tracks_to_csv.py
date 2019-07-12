@@ -48,8 +48,7 @@ def gen_indiv_tracks(save_path, minfrm):
 
     This function is designed to be run independently with arguments, or called from another function
     """
-    # run file from Kyle to read .json files
-    #execfile("open_tracks.py")
+    
     exec(open("/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/open_tracks.py").read())
     numTracks = len(tracks)
 

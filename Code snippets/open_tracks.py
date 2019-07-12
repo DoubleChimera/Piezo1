@@ -2,7 +2,7 @@ import numpy as np
 import json, codecs
 
 def open_tracks(filename):
-    """
+""" -*- open_tracks() docstring and example -*-
     returns txy_pts and tracks extracted from a .json file saved by flika's pynsight plugin
 
     txy_pts is a 2D array. Every row is a particle localization. The columns are [t, x, y], where t is the frame the
@@ -19,9 +19,8 @@ def open_tracks(filename):
             array([[   0.   ,   23.32 ,  253.143],
                    [   1.   ,   23.738,  252.749],
                    [   2.   ,   23.878,  252.8  ]])
+"""
 
-
-    """
     obj_text = codecs.open(filename, 'r', encoding='utf-8').read()
     pts = json.loads(obj_text)
     txy_pts = np.array(pts['txy_pts'])

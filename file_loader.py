@@ -3,13 +3,16 @@
 # todo Step 1:  Load a .json file, a corresponding .tif file, set an output directory,
 # todo          and take in initial inputs for the file
 
+import codecs
+import json
+import os.path
+from fileinput import filename
+
 import numpy as np
 import pandas as pd
-import json, codecs
-import os.path
 
 
-def open_tracks(FILENAME):
+def open_tracks(filename):
     """
     returns txy_pts and tracks extracted from a .json file saved by flika's pynsight plugin
 
@@ -29,7 +32,7 @@ def open_tracks(FILENAME):
                    [   2.   ,   23.878,  252.8  ]])
     """
 
-    obj_text = codecs.open(FILENAME, 'r', encoding='utf-8').read()
+    obj_text = codecs.open(filename, 'r', encoding='utf-8').read()
     pts = json.loads(obj_text)
     txy_pts = np.array(pts['txy_pts'])
     tracks = [np.array(track) for track in pts['tracks']]
@@ -64,9 +67,7 @@ def gen_indiv_tracks(save_path, minfrm):
 
     This function is designed to be run independently with arguments, or called from another function
     """
-    # run file from Kyle to read .json files
-    # execfile("open_tracks.py")
-    # exec(open("/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/open_tracks.py").read())
+
     numTracks = len(tracks)
 
     # make list of tracks with >= min number frames
@@ -86,9 +87,10 @@ def gen_indiv_tracks(save_path, minfrm):
 
 
 if __name__ == '__main__':
-    FILENAME = r'C:/Users/vivty/OneDrive/Documents/Python Programs/RMSD_2D-master/Practice data/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
-    txy_pts, tracks = open_tracks(FILENAME)
+    filename = r'C:/Users/vivty/OneDrive/Documents/Python Programs/RMSD_2D-master/Practice data/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
+    txy_pts, tracks = open_tracks(filename)
     save_path = 'C:/temp'
     minfrm = 20
     lst = gen_indiv_tracks(save_path, minfrm)
 
+print(len(lst))
