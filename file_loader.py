@@ -45,8 +45,10 @@ def open_tracks(filename):
 
 def gen_indiv_tracks(save_path, minfrm):
     """
-    returns lst[] extracted from a .json file saved by flika's pynsight plugin with
+    returns lst[] and lstnan[] 
+    lst[] is extracted from a .json file saved by flika's pynsight plugin with
     track lengths greater than the minfrm (minimum frame) value.
+    lstnan[] has blank tracks filled with nan values
 
     The track number is not related to the track numbers in the .json file,
     they are generated while populating the lst[] with tracks greater than the
@@ -73,21 +75,30 @@ def gen_indiv_tracks(save_path, minfrm):
     """
 
     numTracks = len(tracks)
+    nan = np.nan
 
     # make list of tracks with >= min number frames
     lst = []
+    
     for i in range(0,(numTracks)):
         track = tracks[i]
         pts = txy_pts[track, :]
         if len(pts) >= minfrm:
             lst.append(pts)
+    
+    lstnan = np.copy(lst)
 
     for k in range(0,len(lst)):
         df = pd.DataFrame(lst[k])
         num = k + 1
         completeName = os.path.join(save_path,'track%i.txt' % num)
         df.to_csv(completeName, index=False, header=['Frame_Number','X-coordinate','Y-coordinate'])
-    return lst
+
+        totalnumber = (lstnan[k][-1][0] + 1)
+        missing = sorted(list(set(range(int(totalnumber))) - set(lstnan[k][:,0])))
+        for index, elem in enumerate(missing):
+            lstnan[k] = np.insert(lstnan[k], elem, [[elem, nan, nan]], axis = 0)
+    return lst, lstnan
 
 
 if __name__ == '__main__':
@@ -95,17 +106,50 @@ if __name__ == '__main__':
     txy_pts, tracks = open_tracks(filename)
     save_path = 'C:/temp'
     minfrm = 20
-    lst = gen_indiv_tracks(save_path, minfrm)
+    lst, lstnan = gen_indiv_tracks(save_path, minfrm)
+# * Current Debugging code begins below this point
+# * ----------------------------------------------------------------------------
+# *
+# * ----------------------------------------------------------------------------
 
-# * Debugging code begins below
+# ! ----------------------------------------------------------------------------
+# ! Old Debugging code begins below this point
+# ! ----------------------------------------------------------------------------
+# i = 100
+# print(lstnan[i])
+# print(lst[i])
+# print("Length of original = {}".format(str(len(lst[i]))))
+# print("Length of adjusted = {}".format(str(len(lstnan[i]))))
 
-i = 1
-print(lst[i])
-print("Length = {}".format(str(len(lst[i]))))
-
-# todo in track1, point index 85 is missing and needs to be replaced with a NaN value
-
+# nan = np.nan                                                    # ! done
+# a = lst                                                         # x not needed already there
+# i = 1                                                           # x not needed already there
+# listlength = len(lst[i])                                        # x not needed, unecessary
+# totalnumber = (lst[i][-1][0] + 1)                               # ! done
+# print(lst[i])                                                   # x not needed, unecessary
+# print(str(totalnumber))                                         # x not needed, unecessary
+# print("Length = {}".format(str(listlength)))                    # x not needed, unecessary
+# print("Difference = {}".format(str(totalnumber - listlength)))  # x not needed, unecessary
+# print(lst[i][:,0])                                              # x not needed, unecessary
+# print("-----------")                                            # x not needed, unecessary
+# # make a set that has the same range as                         # x not needed, unecessary
+# # the final index of this one                                   # x not needed, unecessary
+# # compare the sets and pull out differences                     # x not needed, unecessary
+# missing = list(set(range(int(totalnumber))) - set(lst[i][:,0])) # ! in progress
+# print("Missing = {}".format(str(missing)))                      # x not needed, unecessary
+# # x in track1, point index 85 is missing                        # x not needed, unecessary
+# # x and needs to be replaced with a NaN value                   # x not needed, unecessary
+# for index, elem in enumerate(sorted(missing)):                  # ! in progress
+#     a[i] = np.insert(a[i], elem, [[elem, nan, nan]], axis = 0)  # ! in progress
+#     print(a[i])
+# print("-------------------------------------------")
+# print(a[i])
+# print(a[i])
 # if the length of the array is the same as the last indexed value, no points were skipped,
 # and no edits need to be made
 # if the length differs, we need to find the inconsistent points and insert a NaN value
+# start with a for loop going over each array, check the length with index, if same, skip
+# if not same, parse over, find inconsistency and add missing frame value and NaN for x, y
 
+#  list name, index, array, axis
+# np.insert(a, 3, [[2, 2]], axis = 0)b
