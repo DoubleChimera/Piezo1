@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-# todo  Step 1:     Load a .json file, a corresponding .tif file, set an output directory,
-# todo              and take in initial inputs for the file
+# todo  Step 1:     Load a .tif, grab the first frame and plot on top
+# todo              ask for initial parameters about experiement
 # todo
 # ?                 What has been done?
 # // DONE             A .json is loaded into a list of arrays corresponding to each track
@@ -71,7 +71,7 @@ def gen_indiv_tracks(save_path, minfrm):
     save_path selects a directory to save .to_csv formatted .txt files for each track individually and
     minfrm is a user selected value for the minimum number of frames allowed in each tracks
 
-    This function is designed to be run independently with arguments, or called from another function
+    This function is designed to be run independently with arguments, or be called from another function
     """
 
     numTracks = len(tracks)
