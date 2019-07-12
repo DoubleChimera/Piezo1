@@ -4,8 +4,8 @@
 # todo              and take in initial inputs for the file
 # todo
 # ?                 What has been done?
-# todo              A .json is loaded into a list of arrays corresponding to each track
-# todo              --Now need to fill in skipped frames with NaN values
+# // DONE             A .json is loaded into a list of arrays corresponding to each track
+# // DONE             --Now need to fill in skipped frames with NaN values
 
 import codecs
 import json
@@ -88,12 +88,14 @@ def gen_indiv_tracks(save_path, minfrm):
 
     lstnan = np.copy(lst)
 
+    # parse through the list, and extract .txt track files for each track
     for k in range(0,len(lst)):
         df = pd.DataFrame(lst[k])
         num = k + 1
         completeName = os.path.join(save_path,'track%i.txt' % num)
         df.to_csv(completeName, index=False, header=['Frame_Number','X-coordinate','Y-coordinate'])
 
+    # fill in missing frames with NaN values 
         totalnumber = (lstnan[k][-1][0] + 1)
         missing = sorted(list(set(range(int(totalnumber))) - set(lstnan[k][:,0])))
         for index, elem in enumerate(missing):
@@ -104,10 +106,10 @@ def gen_indiv_tracks(save_path, minfrm):
 if __name__ == '__main__':
     filename = r'C:/Users/vivty/OneDrive/Documents/Python Programs/RMSD_2D-master/Practice data/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
     txy_pts, tracks = open_tracks(filename)
+
     save_path = 'C:/temp'
     minfrm = 20
     lst, lstnan = gen_indiv_tracks(save_path, minfrm)
-
 
 # * Current Debugging code begins below this point
 # * ----------------------------------------------------------------------------
@@ -137,12 +139,12 @@ if __name__ == '__main__':
 # # make a set that has the same range as                         # x not needed, unecessary
 # # the final index of this one                                   # x not needed, unecessary
 # # compare the sets and pull out differences                     # x not needed, unecessary
-# missing = list(set(range(int(totalnumber))) - set(lst[i][:,0])) # ! in progress
+# missing = list(set(range(int(totalnumber))) - set(lst[i][:,0])) # ! done
 # print("Missing = {}".format(str(missing)))                      # x not needed, unecessary
 # # x in track1, point index 85 is missing                        # x not needed, unecessary
 # # x and needs to be replaced with a NaN value                   # x not needed, unecessary
-# for index, elem in enumerate(sorted(missing)):                  # ! in progress
-#     a[i] = np.insert(a[i], elem, [[elem, nan, nan]], axis = 0)  # ! in progress
+# for index, elem in enumerate(sorted(missing)):                  # ! done
+#     a[i] = np.insert(a[i], elem, [[elem, nan, nan]], axis = 0)  # ! done
 #     print(a[i])
 # print("-------------------------------------------")
 # print(a[i])
