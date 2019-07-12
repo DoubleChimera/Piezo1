@@ -108,3 +108,4 @@ print("Length = {}".format(str(len(lst[i]))))
 # if the length of the array is the same as the last indexed value, no points were skipped,
 # and no edits need to be made
 # if the length differs, we need to find the inconsistent points and insert a NaN value
+
