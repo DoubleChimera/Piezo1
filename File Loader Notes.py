@@ -11,12 +11,6 @@
                 2. Extract the first frame and display
                 3. Put axes for pixels on display, 0,0 top left, 1024, 1024 bot right
                 4. Be able to plot a track on top of that layer with a list of np.arrays
-            Turn on/off tracks by selection
-                1. Start by turning off one track in the plot
-                2. Now use a list of indices for tracks and turn them off
-                3. Now select a point in 1 track and use it to determine the closest track and turn it off
-                4. Now select an area on the plot and turn off all tracks within that bounds (selection rectangle)
-                5. Link the previous with a mouse-enabled selection box
             Look at matplotlib for handling mouse selection area events to change point colors, add them to a list, etc.
 """
 
