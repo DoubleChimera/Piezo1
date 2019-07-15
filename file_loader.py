@@ -102,6 +102,10 @@ def gen_indiv_tracks(save_path, minfrm):
             lstnan[k] = np.insert(lstnan[k], elem, [[elem, nan, nan]], axis = 0)
     return lst, lstnan
 
+def rmsd()
+
+    return lstrmsd
+
 
 if __name__ == '__main__':
     filename = r'C:/Users/vivty/OneDrive/Documents/Python Programs/RMSD_2D-master/Practice data/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
@@ -149,7 +153,7 @@ if __name__ == '__main__':
 # # x and needs to be replaced with a NaN value                   # x not needed, unecessary
 # for index, elem in enumerate(sorted(missing)):                  # ! done
 #     a[i] = np.insert(a[i], elem, [[elem, nan, nan]], axis = 0)  # ! done
-#     print(a[i])
+#     print(a[i]) 
 # print("-------------------------------------------")
 # print(a[i])
 # print(a[i])
