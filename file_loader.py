@@ -102,16 +102,23 @@ def gen_indiv_tracks(save_path, minfrm):
             lstnan[k] = np.insert(lstnan[k], elem, [[elem, nan, nan]], axis = 0)
     return lst, lstnan
 
-def rmsd()
 
-    return lstrmsd
+# # For use from home computer, comment this out at school
+# if __name__ == '__main__':
+#     filename = r'C:/Users/vivty/OneDrive/Documents/Python Programs/RMSD_2D-master/Practice data/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
+#     txy_pts, tracks = open_tracks(filename)
+
+#     save_path = 'C:/temp'
+#     minfrm = 20
+#     lst, lstnan = gen_indiv_tracks(save_path, minfrm)
 
 
+# For use from school, comment this out at home
 if __name__ == '__main__':
-    filename = r'C:/Users/vivty/OneDrive/Documents/Python Programs/RMSD_2D-master/Practice data/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
+    filename = r'/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Piezo1 Trajectory for Analysis/2018_Nov_tirfm_tdtpiezo_5sec/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
     txy_pts, tracks = open_tracks(filename)
 
-    save_path = 'C:/temp'
+    save_path = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp'
     minfrm = 20
     lst, lstnan = gen_indiv_tracks(save_path, minfrm)
 
@@ -119,7 +126,7 @@ if __name__ == '__main__':
 # * Current Debugging code begins below this point
 # * ----------------------------------------------------------------------------
 
-# print(lst[0])
+# print(lst)
 # print(lstnan[0])
 
 # * ----------------------------------------------------------------------------
@@ -153,7 +160,7 @@ if __name__ == '__main__':
 # # x and needs to be replaced with a NaN value                   # x not needed, unecessary
 # for index, elem in enumerate(sorted(missing)):                  # ! done
 #     a[i] = np.insert(a[i], elem, [[elem, nan, nan]], axis = 0)  # ! done
-#     print(a[i]) 
+#     print(a[i])
 # print("-------------------------------------------")
 # print(a[i])
 # print(a[i])
