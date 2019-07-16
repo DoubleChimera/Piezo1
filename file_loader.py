@@ -102,7 +102,7 @@ def gen_indiv_tracks(save_path, minfrm):
             lstnan[k] = np.insert(lstnan[k], elem, [[elem, nan, nan]], axis = 0)
     return lst, lstnan
 
-def rmsd()
+def rmsd() 
 
     return lstrmsd
 
