@@ -102,10 +102,6 @@ def gen_indiv_tracks(save_path, minfrm):
             lstnan[k] = np.insert(lstnan[k], elem, [[elem, nan, nan]], axis = 0)
     return lst, lstnan
 
-<<<<<<< HEAD
-def rmsd() 
-=======
->>>>>>> 518f18d82d5247aeec8d3c4821c0e64d1abe2236
 
 # # For use from home computer, comment this out at school
 # if __name__ == '__main__':
