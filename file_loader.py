@@ -86,6 +86,13 @@ def gen_indiv_tracks(save_path, minfrm):
         if len(pts) >= minfrm:
             lst.append(pts)
 
+    # Move all tracks such that their starting index is 0
+    for track in range(len(lst)):
+        if lst[track][0][0] != 0:
+            indset = lst[track][0][0]
+            for pts in range(len(lst[track][0:])):
+                lst[track][pts][0] = lst[track][pts][0] - indset
+
     lstnan = np.copy(lst)
 
     # parse through the list, and extract .txt track files for each track
@@ -95,39 +102,45 @@ def gen_indiv_tracks(save_path, minfrm):
         completeName = os.path.join(save_path,'track%i.txt' % num)
         df.to_csv(completeName, index=False, header=['Frame_Number','X-coordinate','Y-coordinate'])
 
-    # fill in missing frames with NaN values 
+    # fill in missing frames with NaN values
         totalnumber = (lstnan[k][-1][0] + 1)
         missing = sorted(list(set(range(int(totalnumber))) - set(lstnan[k][:,0])))
         for elem in missing:
             lstnan[k] = np.insert(lstnan[k], elem, [[elem, nan, nan]], axis = 0)
-    return lst, lstnan
+
+    # a dictionary of index-0 pts from each track
+    trackOrigins = {} 
+    for index, track in enumerate(lstnan):
+        trackOrigins[index] = track[0][1:]
+
+    return lst, lstnan, trackOrigins
 
 
-# # For use from home computer, comment this out at school
-# if __name__ == '__main__':
-#     filename = r'C:/Users/vivty/OneDrive/Documents/Python Programs/RMSD_2D-master/Practice data/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
-#     txy_pts, tracks = open_tracks(filename)
+# For use from home computer, comment this out at school
+if __name__ == '__main__':
+    filename = r'C:/Users/vivty/OneDrive/Documents/Python Programs/RMSD_2D-master/Practice data/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
+    txy_pts, tracks = open_tracks(filename)
 
-#     save_path = 'C:/temp'
-#     minfrm = 20
-#     lst, lstnan = gen_indiv_tracks(save_path, minfrm)
+    save_path = 'C:/temp'
+    minfrm = 20
+    lst, lstnan, trackOrigins = gen_indiv_tracks(save_path, minfrm)
+
+
 
 
 # For use from school, comment this out at home
-if __name__ == '__main__':
-    filename = r'/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Piezo1 Trajectory for Analysis/2018_Nov_tirfm_tdtpiezo_5sec/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
-    txy_pts, tracks = open_tracks(filename)
+# if __name__ == '__main__':
+#     filename = r'/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Piezo1 Trajectory for Analysis/2018_Nov_tirfm_tdtpiezo_5sec/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
+#     txy_pts, tracks = open_tracks(filename)
 
-    save_path = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp'
-    minfrm = 20
-    lst, lstnan = gen_indiv_tracks(save_path, minfrm)
+#     save_path = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp'
+#     minfrm = 20
+#     lst, lstnan = gen_indiv_tracks(save_path, minfrm)
 
 
 # * Current Debugging code begins below this point
 # * ----------------------------------------------------------------------------
 
-# print(lst)
-# print(lstnan[0])
 
 # * ----------------------------------------------------------------------------
 
@@ -172,3 +185,25 @@ if __name__ == '__main__':
 
 #  list name, index, array, axis
 # np.insert(a, 3, [[2, 2]], axis = 0)b
+
+# // ! Need to fix track positions to all start at index 0
+
+
+# arr1 = np.array([[5, 0, 0],[7, 2, 2],[8, 3, 3],[9, 4, 4]])
+# arr2 = np.array([[4, 0, 0],[6, 2, 2],[7, 3, 3],[8, 4, 4],[9, 5, 5]])
+# arr3 = np.array([[3, 0, 0],[5, 2, 2],[6, 3, 3],[7, 4, 4]])
+
+# testlst = [arr1, arr2, arr3]
+
+
+# print(testlst)
+# print(testlst[0][0][0])  #first index goes to next array.. duhh, natively this gives 0th item 0th index
+# print(len(testlst[0][0:]))  #want length of each array, first index controls next array, yay
+
+# for track in range(len(testlst)):
+#     if testlst[track][0][0] != 0:
+#         indset = testlst[track][0][0]
+#         for pts in range(len(testlst[track][0:])):
+#             testlst[track][pts][0] = testlst[track][pts][0] - indset
+
+# print(testlst)
