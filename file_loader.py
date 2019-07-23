@@ -116,31 +116,31 @@ def gen_indiv_tracks(save_path, minfrm):
     return lst, lstnan, trackOrigins
 
 
-# For use from home computer, comment this out at school
-if __name__ == '__main__':
-    filename = r'C:/Users/vivty/OneDrive/Documents/Python Programs/RMSD_2D-master/Practice data/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
-    txy_pts, tracks = open_tracks(filename)
+# # For use from home computer, comment this out at school
+# if __name__ == '__main__':
+#     filename = r'C:/Users/vivty/OneDrive/Documents/Python Programs/RMSD_2D-master/Practice data/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
+#     txy_pts, tracks = open_tracks(filename)
 
-    save_path = 'C:/temp'
-    minfrm = 20
-    lst, lstnan, trackOrigins = gen_indiv_tracks(save_path, minfrm)
+#     save_path = 'C:/temp'
+#     minfrm = 20
+#     lst, lstnan, trackOrigins = gen_indiv_tracks(save_path, minfrm)
 
 
 
 
 # For use from school, comment this out at home
-# if __name__ == '__main__':
-#     filename = r'/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Piezo1 Trajectory for Analysis/2018_Nov_tirfm_tdtpiezo_5sec/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
-#     txy_pts, tracks = open_tracks(filename)
+if __name__ == '__main__':
+    filename = r'/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Piezo1 Trajectory for Analysis/2018_Nov_tirfm_tdtpiezo_5sec/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
+    txy_pts, tracks = open_tracks(filename)
 
-#     save_path = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp'
-#     minfrm = 20
-#     lst, lstnan = gen_indiv_tracks(save_path, minfrm)
+    save_path = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp'
+    minfrm = 20
+    lst, lstnan, trackOrigins = gen_indiv_tracks(save_path, minfrm)
 
 
 # * Current Debugging code begins below this point
 # * ----------------------------------------------------------------------------
-
+print(trackOrigins)
 
 # * ----------------------------------------------------------------------------
 
