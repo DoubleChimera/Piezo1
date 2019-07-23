@@ -116,6 +116,16 @@ def gen_indiv_tracks(save_path, minfrm):
     return lst, lstnan, trackOrigins
 
 
+def select_tracks_plot(tifFile, trackOrigins, trackList):
+    # What do i want this to do???
+    # todo Plot trackOrigins as a scatter plot
+    # todo Set the tif file, 1st frame as the background to the plot
+    # todo Use the lasso tool to select points, generate a list of these tracks as "active tracks"
+    # todo Use the "active tracks" to plot tracks on the .tif file for confirmation
+    # todo Use click selection to turn on/off tracks close to the border and finalize the "active tracks" list
+
+
+#############################################################################################
 # # For use from home computer, comment this out at school
 # if __name__ == '__main__':
 #     filename = r'C:/Users/vivty/OneDrive/Documents/Python Programs/RMSD_2D-master/Practice data/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
@@ -124,10 +134,10 @@ def gen_indiv_tracks(save_path, minfrm):
 #     save_path = 'C:/temp'
 #     minfrm = 20
 #     lst, lstnan, trackOrigins = gen_indiv_tracks(save_path, minfrm)
+#############################################################################################
 
 
-
-
+#############################################################################################
 # For use from school, comment this out at home
 if __name__ == '__main__':
     filename = r'/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Piezo1 Trajectory for Analysis/2018_Nov_tirfm_tdtpiezo_5sec/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
@@ -136,11 +146,11 @@ if __name__ == '__main__':
     save_path = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp'
     minfrm = 20
     lst, lstnan, trackOrigins = gen_indiv_tracks(save_path, minfrm)
-
+#############################################################################################
 
 # * Current Debugging code begins below this point
 # * ----------------------------------------------------------------------------
-print(trackOrigins)
+
 
 # * ----------------------------------------------------------------------------
 
