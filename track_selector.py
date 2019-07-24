@@ -74,7 +74,7 @@ class SelectFromCollection(object):
 # TODO define a function that returns the good list of tracks
 def memBoundTracks(trackOrigins, lassoPoints):
     trackList = []
-
+    trackList = [index for index, coords in trackOrigins.items() if coords in lassoPoints]
     return trackList
 
 if __name__ == '__main__':
@@ -115,5 +115,3 @@ if __name__ == '__main__':
     lassoPoints = plotReturn()
 
     trackList = memBoundTracks(trackOrigins, lassoPoints)
-    print("Selected track indices:")
-    print(trackList)
