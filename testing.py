@@ -10,10 +10,8 @@ if __name__ == '__main__':
     tifFile = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/test_images/test1.tiff'
     minfrm = 20
 
-
     txy_pts, tracks = fl.open_tracks(filename)
     lst, lstnan, trackOrigins = fl.gen_indiv_tracks(save_path, minfrm, tracks, txy_pts)
-
 
     xvals, yvals = tracksel.SelectFromCollection.select_tracks_plot(trackOrigins)
 
@@ -32,6 +30,7 @@ if __name__ == '__main__':
             ax.set_title("")
             plt.close()
 
+
     def plotReturn():
         fig.canvas.mpl_connect("key_press_event", accept)
         ax.set_title("Press enter to accept selected points.")
@@ -39,6 +38,7 @@ if __name__ == '__main__':
         plt.show()
         lassoPoints = selector.xys[selector.ind]
         return lassoPoints
+
 
     lassoPoints = plotReturn()
 
