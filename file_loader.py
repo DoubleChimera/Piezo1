@@ -1,12 +1,4 @@
 # -*- coding: utf-8 -*-
-
-# todo  Step 1:     Load a .tif, grab the first frame and plot on top
-# todo              ask for initial parameters about experiement
-# todo
-# ?                 What has been done?
-# // DONE             A .json is loaded into a list of arrays corresponding to each track
-# // DONE             --Now need to fill in skipped frames with NaN values
-
 import codecs
 import json
 import os.path
@@ -43,7 +35,7 @@ def open_tracks(filename):
     return txy_pts, tracks
 
 
-def gen_indiv_tracks(save_path, minfrm):
+def gen_indiv_tracks(save_path, minfrm, tracks, txy_pts):
     """
     returns lst[] and lstnan[]
     lst[] is extracted from a .json file saved by flika's pynsight plugin with
@@ -123,7 +115,7 @@ def select_tracks_plot(tifFile, trackOrigins, trackList):
     # todo Use the lasso tool to select points, generate a list of these tracks as "active tracks"
     # todo Use the "active tracks" to plot tracks on the .tif file for confirmation
     # todo Use click selection to turn on/off tracks close to the border and finalize the "active tracks" list
-
+    return NONE
 
 #############################################################################################
 # # For use from home computer, comment this out at school
@@ -145,75 +137,12 @@ if __name__ == '__main__':
 
     save_path = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp'
     minfrm = 20
-    lst, lstnan, trackOrigins = gen_indiv_tracks(save_path, minfrm)
+    lst, lstnan, trackOrigins = gen_indiv_tracks(save_path, minfrm, tracks, txy_pts)
 #############################################################################################
 
 # * Current Debugging code begins below this point
 # * ----------------------------------------------------------------------------
-
-
 # * ----------------------------------------------------------------------------
-
 # ! ----------------------------------------------------------------------------
 # ! Old Debugging code begins below this point
 # ! ----------------------------------------------------------------------------
-# i = 100
-# print(lstnan[i])
-# print(lst[i])
-# print("Length of original = {}".format(str(len(lst[i]))))
-# print("Length of adjusted = {}".format(str(len(lstnan[i]))))
-
-# nan = np.nan                                                    # ! done
-# a = lst                                                         # x not needed already there
-# i = 1                                                           # x not needed already there
-# listlength = len(lst[i])                                        # x not needed, unecessary
-# totalnumber = (lst[i][-1][0] + 1)                               # ! done
-# print(lst[i])                                                   # x not needed, unecessary
-# print(str(totalnumber))                                         # x not needed, unecessary
-# print("Length = {}".format(str(listlength)))                    # x not needed, unecessary
-# print("Difference = {}".format(str(totalnumber - listlength)))  # x not needed, unecessary
-# print(lst[i][:,0])                                              # x not needed, unecessary
-# print("-----------")                                            # x not needed, unecessary
-# # make a set that has the same range as                         # x not needed, unecessary
-# # the final index of this one                                   # x not needed, unecessary
-# # compare the sets and pull out differences                     # x not needed, unecessary
-# missing = list(set(range(int(totalnumber))) - set(lst[i][:,0])) # ! done
-# print("Missing = {}".format(str(missing)))                      # x not needed, unecessary
-# # x in track1, point index 85 is missing                        # x not needed, unecessary
-# # x and needs to be replaced with a NaN value                   # x not needed, unecessary
-# for index, elem in enumerate(sorted(missing)):                  # ! done
-#     a[i] = np.insert(a[i], elem, [[elem, nan, nan]], axis = 0)  # ! done
-#     print(a[i])
-# print("-------------------------------------------")
-# print(a[i])
-# print(a[i])
-# if the length of the array is the same as the last indexed value, no points were skipped,
-# and no edits need to be made
-# if the length differs, we need to find the inconsistent points and insert a NaN value
-# start with a for loop going over each array, check the length with index, if same, skip
-# if not same, parse over, find inconsistency and add missing frame value and NaN for x, y
-
-#  list name, index, array, axis
-# np.insert(a, 3, [[2, 2]], axis = 0)b
-
-# // ! Need to fix track positions to all start at index 0
-
-
-# arr1 = np.array([[5, 0, 0],[7, 2, 2],[8, 3, 3],[9, 4, 4]])
-# arr2 = np.array([[4, 0, 0],[6, 2, 2],[7, 3, 3],[8, 4, 4],[9, 5, 5]])
-# arr3 = np.array([[3, 0, 0],[5, 2, 2],[6, 3, 3],[7, 4, 4]])
-
-# testlst = [arr1, arr2, arr3]
-
-
-# print(testlst)
-# print(testlst[0][0][0])  #first index goes to next array.. duhh, natively this gives 0th item 0th index
-# print(len(testlst[0][0:]))  #want length of each array, first index controls next array, yay
-
-# for track in range(len(testlst)):
-#     if testlst[track][0][0] != 0:
-#         indset = testlst[track][0][0]
-#         for pts in range(len(testlst[track][0:])):
-#             testlst[track][pts][0] = testlst[track][pts][0] - indset
-
-# print(testlst)
