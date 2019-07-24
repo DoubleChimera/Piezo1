@@ -71,7 +71,7 @@ class SelectFromCollection(object):
         self.collection.set_facecolors(self.fc)
         self.canvas.draw_idle()
 
-# TODO define a function that returns the good list of tracks
+
 def memBoundTracks(trackOrigins, lassoPoints):
     trackList = []
     trackList = [index for index, coords in trackOrigins.items() if coords in lassoPoints]
