@@ -71,6 +71,11 @@ class SelectFromCollection(object):
         self.collection.set_facecolors(self.fc)
         self.canvas.draw_idle()
 
+# TODO define a function that returns the good list of tracks
+def memBoundTracks(trackOrigins, lassoPoints):
+    trackList = []
+
+    return trackList
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
@@ -95,7 +100,6 @@ if __name__ == '__main__':
 
     def accept(event):
         if event.key == "enter":
-            print("Selected points:")
             selector.disconnect()
             ax.set_title("")
             plt.close()
@@ -105,9 +109,11 @@ if __name__ == '__main__':
         ax.set_title("Press enter to accept selected points.")
 
         plt.show()
-        acceptedTracks = selector.xys[selector.ind]
-        return acceptedTracks
+        lassoPoints = selector.xys[selector.ind]
+        return lassoPoints
 
-    acceptedTracks = plotReturn()
+    lassoPoints = plotReturn()
 
-    print(acceptedTracks)
+    trackList = memBoundTracks(trackOrigins, lassoPoints)
+    print("Selected track indices:")
+    print(trackList)
