@@ -87,11 +87,16 @@ def gen_indiv_tracks(save_path, minfrm, tracks, txy_pts):
 
     lstnan = np.copy(lst)
 
+    # make a new directory to save all the track files in if it doesn't already exist
+    allTracksDir = os.path.join(save_path, 'All_tracks')
+    if not os.path.exists(allTracksDir):
+        os.makedirs(allTracksDir)
+
     # parse through the list, and extract .txt track files for each track
     for k in range(0,len(lst)):
         df = pd.DataFrame(lst[k])
         num = k + 1
-        completeName = os.path.join(save_path,'track%i.txt' % num)
+        completeName = os.path.join(allTracksDir,'track%i.txt' % num)
         df.to_csv(completeName, index=False, header=['Frame_Number','X-coordinate','Y-coordinate'])
 
     # fill in missing frames with NaN values

@@ -1,6 +1,11 @@
 import track_selector as tracksel
 import file_loader as fl
 
+# TODO using the trackList of good track indices, make a new array of an array of all the good tracks, use lstnan
+# TODO plot the tracks on top of the .tif file
+# TODO (maybe) make the tracks clickable to toggle them, in case one or two were accidentally included that cross the cell membrane boundary... (maybe not... too much work... could just start over for now)
+# TODO output the "Selected Tracks" as individual text files to the "Selected Tracks" folder
+# TODO Use a press-enter-to-close command for the plot of tracks on the .tif, afterthis, move onto the statistical methods section of the code
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt

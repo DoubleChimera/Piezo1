@@ -1,6 +1,8 @@
 # Editing Lasso Example to be track selector, will remain to track_selector.py when done
 
 import numpy as np
+import os.path
+import pandas as pd
 import file_loader as fl
 
 from matplotlib.widgets import LassoSelector
@@ -75,7 +77,14 @@ class SelectFromCollection(object):
 def memBoundTracks(trackOrigins, lassoPoints):
     trackList = []
     trackList = [index for index, coords in trackOrigins.items() if coords in lassoPoints]
+    SelecTracksDir = os.path.join(save_path, 'Selected_tracks')
+    if not os.path.exists(SelecTracksDir):
+        os.makedirs(SelecTracksDir)
+    df = pd.DataFrame(trackList)
+    completeName = os.path.join(SelecTracksDir, 'selected_tracks_indices.txt')
+    df.to_csv(completeName, index=False, header=['Selected Track Index'])
     return trackList
+
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
@@ -115,3 +124,13 @@ if __name__ == '__main__':
     lassoPoints = plotReturn()
 
     trackList = memBoundTracks(trackOrigins, lassoPoints)
+
+
+
+    # // TODO output the trackList of selected indices to a new folder named "Selected tracks" with filename, selected_tracks_indices.txt
+    # // TODO rename the folder where all the individual track files go "All tracks"
+    # TODO using the trackList of good track indices, make a new array of an array of all the good tracks, use lstnan
+    # TODO plot the tracks on top of the .tif file
+    # TODO (maybe) make the tracks clickable to toggle them, in case one or two were accidentally included that cross the cell membrane boundary... (maybe not... too much work... could just start over for now)
+    # TODO output the "Selected Tracks" as individual text files to the "Selected Tracks" folder
+    # TODO Use a press-enter-to-close command for the plot of tracks on the .tif, afterthis, move onto the statistical methods section of the code
