@@ -112,11 +112,9 @@ def genSelectedTrackList(allTracks, selectedTrackIndices, tifFile, save_path):
     implot = plt.imshow(img)
     plt.suptitle("Close plot to continue...", x=0.40, y=.95, horizontalalignment='left', verticalalignment='top', fontsize = 15)
     plt.show()
-    # Prepare / encodes selectedTrackList for .json dump
-    outSelTrackList = json.dumps(selectedTrackList, cls=NumpyEncoder)
-    # This outputs a .json file with all the selected tracks
+    # Outputs a .json file with all the selected tracks to a specified directory
     outSelTracksDir = os.path.join(SelecTracksDir, 'selected_track_list.json')
-    json.dump(outSelTrackList, codecs.open(outSelTracksDir, 'w', encoding='utf-8'), separators=(',', ':'), sort_keys=True)
+    json.dump(selectedTrackList, cls=NumpyEncoder, fp=codecs.open(outSelTracksDir, 'w', encoding='utf-8'), separators=(',', ':'), sort_keys=True)
     return selectedTrackList
 
 class NumpyEncoder(json.JSONEncoder):
