@@ -13,9 +13,10 @@ class json_loader(file_path):
 
 
 if '__name__' == '__main__':
-    fileLoadPath = ''
-    savePath = ''
-    frameTime = ''
+    fileLoadPath = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp/Selected_tracks/selected_track_list.json'
+    savePath = '/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp'
+    # time (in us) between frames from experiment, typically 50us or 100us
+    frameTime = '50'
 
 # * #################### CURRENT DEBUGGING CODE IS BELOW ####################
 
