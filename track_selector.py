@@ -34,6 +34,7 @@ class SelectFromCollection(object):
         alpha value of 1 and non-selected points to `alpha_other`.
     """
 
+
     def __init__(self, ax, collection, alpha_other=0.1):
         self.canvas = ax.figure.canvas
         self.collection = collection
@@ -52,6 +53,7 @@ class SelectFromCollection(object):
         self.lasso = LassoSelector(ax, onselect=self.onselect)
         self.ind = []
 
+
     def select_tracks_plot(trackOrigins):
         xyOrigins = []
         for xycoords in trackOrigins.values():
@@ -60,6 +62,7 @@ class SelectFromCollection(object):
         yvals = [coord[1] for coord in xyOrigins]
         return xvals, yvals
 
+
     def onselect(self, verts):
         path = Path(verts)
         self.ind = np.nonzero(path.contains_points(self.xys))[0]
@@ -67,6 +70,7 @@ class SelectFromCollection(object):
         self.fc[self.ind, -1] = 1
         self.collection.set_facecolors(self.fc)
         self.canvas.draw_idle()
+
 
     def disconnect(self):
         self.lasso.disconnect_events()
@@ -86,6 +90,7 @@ def memBoundTracks(trackOrigins, lassoPoints):
     completeName = os.path.join(SelecTracksDir, 'selected_tracks_indices.txt')
     df.to_csv(completeName, index=False, header=[f'Selected Track Index -- {timestr}'])
     return trackList
+
 
 def genSelectedTrackList(allTracks, selectedTrackIndices, tifFile, save_path):
     selectedTrackList = []
@@ -128,11 +133,13 @@ if __name__ == '__main__':
     selector = SelectFromCollection(ax, pts)
     implot = plt.imshow(img)
 
+
     def accept(event):
         if event.key == "enter":
             selector.disconnect()
             ax.set_title("")
             plt.close()
+
 
     def plotReturn():
         fig.canvas.mpl_connect("key_press_event", accept)
@@ -141,6 +148,7 @@ if __name__ == '__main__':
         plt.show()
         lassoPoints = selector.xys[selector.ind]
         return lassoPoints
+
 
     lassoPoints = plotReturn()
 
