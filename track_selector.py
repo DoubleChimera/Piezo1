@@ -5,6 +5,8 @@ import os.path
 import pandas as pd
 import file_loader as fl
 import time
+import json
+import codecs
 
 from matplotlib.widgets import LassoSelector
 from matplotlib.path import Path
@@ -101,6 +103,7 @@ def genSelectedTrackList(allTracks, selectedTrackIndices, tifFile, save_path):
     SelecTracksDir = os.path.join(save_path, 'Selected_tracks')
     if not os.path.exists(SelecTracksDir):
         os.makedirs(SelecTracksDir)
+    #dump the whole tracklist as a json
     for index, track in enumerate(selectedTrackList):
         plt.plot(track[:,1], track[:,2], color='chartreuse')
         df = pd.DataFrame(track)
@@ -109,7 +112,27 @@ def genSelectedTrackList(allTracks, selectedTrackIndices, tifFile, save_path):
     implot = plt.imshow(img)
     plt.suptitle("Close plot to continue...", x=0.40, y=.95, horizontalalignment='left', verticalalignment='top', fontsize = 15)
     plt.show()
+    # Prepare / encodes selectedTrackList for .json dump
+    outSelTrackList = json.dumps(selectedTrackList, cls=NumpyEncoder)
+    # This outputs a .json file with all the selected tracks
+    outSelTracksDir = os.path.join(SelecTracksDir, 'selected_track_list.json')
+    json.dump(outSelTrackList, codecs.open(outSelTracksDir, 'w', encoding='utf-8'), separators=(',', ':'), sort_keys=True)
+    ## To "unjsonify" this data use the following:
+    # obj_text = codecs.open(file_path, 'r', encoding='utf-8').read()
+    # b_new = json.loads(obj_text)
+    # a_new = np.array(b_new)
     return selectedTrackList
+
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
+# a = np.array([[1, 2, 3], [4, 5, 6]])
+# print(a.shape)
+# json_dump = json.dumps({'a': a, 'aa': [2, (2, 3, 4), a], 'bb': [2]}, cls=NumpyEncoder)
+# print(json_dump)
 
 
 if __name__ == '__main__':
