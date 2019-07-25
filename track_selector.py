@@ -4,6 +4,7 @@ import numpy as np
 import os.path
 import pandas as pd
 import file_loader as fl
+import time
 
 from matplotlib.widgets import LassoSelector
 from matplotlib.path import Path
@@ -77,13 +78,33 @@ class SelectFromCollection(object):
 def memBoundTracks(trackOrigins, lassoPoints):
     trackList = []
     trackList = [index for index, coords in trackOrigins.items() if coords in lassoPoints]
+    timestr = time.strftime("%Y%m%d-%H:%M:%S")
     SelecTracksDir = os.path.join(save_path, 'Selected_tracks')
     if not os.path.exists(SelecTracksDir):
         os.makedirs(SelecTracksDir)
     df = pd.DataFrame(trackList)
     completeName = os.path.join(SelecTracksDir, 'selected_tracks_indices.txt')
-    df.to_csv(completeName, index=False, header=['Selected Track Index'])
+    df.to_csv(completeName, index=False, header=[f'Selected Track Index -- {timestr}'])
     return trackList
+
+def genSelectedTrackList(allTracks, selectedTrackIndices, tifFile, save_path):
+    selectedTrackList = []
+    for index in selectedTrackIndices:
+        selectedTrackList.append(allTracks[index])
+    img = plt.imread(tifFile)
+    plt.figure(figsize=(10,10))
+    SelecTracksDir = os.path.join(save_path, 'Selected_tracks')
+    if not os.path.exists(SelecTracksDir):
+        os.makedirs(SelecTracksDir)
+    for index, track in enumerate(selectedTrackList):
+        plt.plot(track[:,1], track[:,2], color='chartreuse')
+        df = pd.DataFrame(track)
+        completeName = os.path.join(SelecTracksDir, f'Track{selectedTrackIndices[index]}.txt')
+        df.to_csv(completeName, index=False, header=['Frame_Number','X-coordinate','Y-coordinate'])
+    implot = plt.imshow(img)
+    plt.suptitle("Close plot to continue...", x=0.40, y=.95, horizontalalignment='left', verticalalignment='top', fontsize = 15)
+    plt.show()
+    return selectedTrackList
 
 
 if __name__ == '__main__':
@@ -101,7 +122,7 @@ if __name__ == '__main__':
     img = plt.imread(tifFile)
 
     subplot_kw = dict(xlim=(0, 1024), ylim=(1024, 0), autoscale_on=False)
-    fig, ax = plt.subplots(subplot_kw=subplot_kw)
+    fig, ax = plt.subplots(subplot_kw=subplot_kw, figsize=(10,10))
 
     pts = ax.scatter(xvals, yvals, s=5, c='chartreuse')
     selector = SelectFromCollection(ax, pts)
@@ -125,12 +146,4 @@ if __name__ == '__main__':
 
     trackList = memBoundTracks(trackOrigins, lassoPoints)
 
-
-
-    # // TODO output the trackList of selected indices to a new folder named "Selected tracks" with filename, selected_tracks_indices.txt
-    # // TODO rename the folder where all the individual track files go "All tracks"
-    # TODO using the trackList of good track indices, make a new array of an array of all the good tracks, use lstnan
-    # TODO plot the tracks on top of the .tif file
-    # TODO (maybe) make the tracks clickable to toggle them, in case one or two were accidentally included that cross the cell membrane boundary... (maybe not... too much work... could just start over for now)
-    # TODO output the "Selected Tracks" as individual text files to the "Selected Tracks" folder
-    # TODO Use a press-enter-to-close command for the plot of tracks on the .tif, afterthis, move onto the statistical methods section of the code
+    selectedTrackList = genSelectedTrackList(lstnan, trackList, tifFile, save_path)
