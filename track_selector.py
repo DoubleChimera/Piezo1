@@ -117,10 +117,6 @@ def genSelectedTrackList(allTracks, selectedTrackIndices, tifFile, save_path):
     # This outputs a .json file with all the selected tracks
     outSelTracksDir = os.path.join(SelecTracksDir, 'selected_track_list.json')
     json.dump(outSelTrackList, codecs.open(outSelTracksDir, 'w', encoding='utf-8'), separators=(',', ':'), sort_keys=True)
-    ## To "unjsonify" this data use the following:
-    # obj_text = codecs.open(file_path, 'r', encoding='utf-8').read()
-    # b_new = json.loads(obj_text)
-    # a_new = np.array(b_new)
     return selectedTrackList
 
 class NumpyEncoder(json.JSONEncoder):
@@ -129,22 +125,18 @@ class NumpyEncoder(json.JSONEncoder):
             return obj.tolist()
         return json.JSONEncoder.default(self, obj)
 
-# a = np.array([[1, 2, 3], [4, 5, 6]])
-# print(a.shape)
-# json_dump = json.dumps({'a': a, 'aa': [2, (2, 3, 4), a], 'bb': [2]}, cls=NumpyEncoder)
-# print(json_dump)
-
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
-
+    # * USER INPUTS GO BELOW * #
     filename = r'/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Piezo1 Trajectory for Analysis/2018_Nov_tirfm_tdtpiezo_5sec/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
+    tifFile = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/test_images/test1.tiff'
     save_path = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp'
     minfrm = 20
+    # * END OF USER INPUTS * #
+
     txy_pts, tracks = fl.open_tracks(filename)
     lst, lstnan, trackOrigins = fl.gen_indiv_tracks(save_path, minfrm, tracks, txy_pts)
-
-    tifFile = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/test_images/test1.tiff'
     xvals, yvals = SelectFromCollection.select_tracks_plot(trackOrigins)
 
     img = plt.imread(tifFile)
