@@ -39,14 +39,21 @@ class MSD(object):
 
         return self.msd
 
+    def eaMSD(self, trackArray):
+        #loop over the list of tracks and run imsd, summing the results here
+        # takes a track array
+        # passes each array to iMSD
+        # determines which result is the longest and adds subsequent results to it
+        # returns that value
+        return None
 
 if __name__ == '__main__':
-    # * USER INPUTS BELOW * #
+    #################### * USER INPUTS BELOW * ####################
     fileLoadPath = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp/Selected_tracks/selected_track_list.json'
     savePath = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp'
     # time (in us) between frames from experiment, typically 50us or 100us
     frameTime = '50'
-    # * END OF USER INPUTS * #
+    #################### * END OF USER INPUTS * ###################
 
     # Instantiates and loads .json file as trackArray
     # Tracks can be accessed by index, i.e. trackArray[0], trackArray[1], etc.
@@ -58,16 +65,11 @@ if __name__ == '__main__':
     MSD = MSD()
     r = trackArray[1][:,1:3]
 
-    msd = MSD.iMSD(traj=r, dt=.1, with_nan=True)
+    msd = MSD.iMSD(traj=r, dt=.05, with_nan=True)
     print(msd)
     # iMSD does the individual MSD, now just need to loop over the whole set of trajectories.... should be easy... yeah right
 
 
 # * #################### CURRENT DEBUGGING CODE IS BELOW ####################
-
-# # To "unjsonify" this data use the following:
-# obj_text = codecs.open(file_path, 'r', encoding='utf-8').read()
-# b_new = json.loads(obj_text)
-# a_new = np.array(b_new)
 
 # ! ####################   OLD DEBUGGING CODE IS BELOW   ####################
