@@ -1,6 +1,7 @@
 import codecs
 import json
 import numpy as np
+import pandas as pd
 
 # ! This function should take in a file path for a .json file of selected tracks and return a nested
 # ! numpy array with all the tracks for further processing.  Include some documentation or comments about
@@ -9,8 +10,34 @@ class json_loader(object):
     def json_to_array(self, file_path):
         self.objLoad = codecs.open(file_path, 'r', encoding='utf-8').read()
         self.lstnan = np.array(json.loads(self.objLoad))
-        return self.lstnan
+        self.arrNan = np.array([np.array(track) for track in self.lstnan])
+        return self.arrNan
 
+
+class MSD(object):
+    def iMSD(self, traj, dt, with_nan=True):
+        self.shifts = np.arange(1, len(traj), dtype='int')
+        self.msd = np.empty((len(self.shifts), 2), dtype='float')
+        self.msd[:] = np.nan
+
+        self.msd[:, 1] = self.shifts * dt
+
+        for i, shift in enumerate(self.shifts):
+            self.diffs = traj[:-shift] - traj[shift:]
+            if with_nan:
+                self.diffs = self.diffs[~np.isnan(self.diffs).any(axis=1)]
+            self.diffs = np.square(self.diffs).sum(axis=1)
+
+            if len(self.diffs) > 0:
+                self.msd[i, 0] = np.mean(self.diffs)
+
+        self.msd = pd.DataFrame(self.msd)
+        self.msd.columns = ["msd", "delay"]
+
+        self.msd.set_index('delay', drop=True, inplace=True)
+        self.msd.dropna(inplace=True)
+
+        return self.msd
 
 
 if __name__ == '__main__':
@@ -21,9 +48,19 @@ if __name__ == '__main__':
     frameTime = '50'
     # * END OF USER INPUTS * #
 
+    # Instantiates and loads .json file as trackArray
+    # Tracks can be accessed by index, i.e. trackArray[0], trackArray[1], etc.
+    # Frame index: trackArray[0][:,0]    X-coords: trackArray[0][:,1]   Y-coords: trackArray[0][:,2]  XY-coords: trackArray[0][:,1:3]
+    # XY-coord of 0th frame trackArray[0][0,1:3]
     jl = json_loader()
-    trackList = jl.json_to_array(fileLoadPath)
-    print(trackList[0])
+    trackArray = jl.json_to_array(fileLoadPath)
+
+    MSD = MSD()
+    r = trackArray[1][:,1:3]
+
+    msd = MSD.iMSD(traj=r, dt=.1, with_nan=True)
+    print(msd)
+    # iMSD does the individual MSD, now just need to loop over the whole set of trajectories.... should be easy... yeah right
 
 
 # * #################### CURRENT DEBUGGING CODE IS BELOW ####################
