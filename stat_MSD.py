@@ -11,7 +11,7 @@ class json_loader(object):
         return self.arrNan
 
 
-# ! This class remains unused, for references for now
+# * This class remains unused, for reference for now
 class taMSD(object):
     def iMSD(self, traj, dt, with_nan=True):
         self.shifts = np.arange(1, len(traj), dtype='int')
@@ -48,31 +48,34 @@ class taMSD(object):
 
 
 class MSD(object):
-    def ensemble_averaged(self, tracks, ftime, with_nan=True):
+    def ensemble_averaged(self, tracks, ftime, pwidth, with_nan=True):
         self.tracks = tracks
         self.ftime = ftime
         maxVal = 0
-        maxVal = [val.shape[0] for val in tracks if val.shape[0] > maxVal]
+        maxVal = [val.shape[0] for val in tracks if val.shape[0] > maxVal]  # This returns a list of maxVals for each track, use max(maxVal) for absolute max value
         self.ensMSD = np.zeros((max(maxVal), 1), dtype='float')
 
         for track in tracks:
             diff = track[:,1:3] - track[0,1:3]
+            # adjust pixel values to um distances using pwidth
+            diff = diff * pwidth
             diff = np.square(diff).sum(axis=1).reshape(len(diff),1)
-            self.indivSum = np.sum(np.stack((self.ensMSD[:len(diff)], diff)), axis=0)
+            self.indivSum = np.nansum(np.stack((self.ensMSD[:len(diff)], diff)), axis=0)
             self.ensMSD[:len(diff)] = self.indivSum
 
         self.ensMSD = self.ensMSD / len(tracks)
 
-        self.lagTimes = (np.arange(0, len(self.ensMSD), dtype='float').reshape(100,1)) * ftime
+        self.lagTimes = (np.arange(0, len(self.ensMSD), dtype='float').reshape(max(maxVal),1)) * self.ftime
         self.ensMSD = np.append(self.lagTimes, self.ensMSD, axis = 1)
         self.ensMSD = pd.DataFrame(self.ensMSD)
         self.ensMSD.columns = ["Lag Time","EAMSD"]
-        # self.ensMSD.set_index('Lag Time', drop=True, inplace=True)  # ! Unused property - sets an arbitrary column as the index, in this case 'Lag Time'
+        # self.ensMSD.set_index('Lag Time', drop=True, inplace=True)  # * Unused property - sets an arbitrary column as the index, in this case 'Lag Time'
         self.ensMSD.dropna(inplace=True)
-
+        # returns pandas data frame with lag time in seconds <r^2(del)> in um^2
         return self.ensMSD
 
-    def plot_eaMSD():
+    def plot_eaMSD(self, save_path, eaMSD_coords):
+        # ! This is where the next code needs to go
         return None
 
 if __name__ == '__main__':
@@ -80,7 +83,9 @@ if __name__ == '__main__':
     fileLoadPath = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp/Selected_tracks/selected_track_list.json'
     savePath = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp'
     # time (in ms) between frames from experiment, typically 50ms or 100ms
-    frameTime = 50
+    pixelWidth = .1092      # in microns
+    frameTime = 50          # in milliseconds
+
     #################### * END OF USER INPUTS * ###################
 
     # Instantiates and loads .json file as trackArray
@@ -91,8 +96,13 @@ if __name__ == '__main__':
     msd = MSD()
     # Converts time to seconds
     frameTime = frameTime / 1000
-    # Returns a pandas data frame of values
-    ensMSD = msd.ensemble_averaged(tracks=trackArray, ftime=frameTime)
+
+    # Returns a pandas data frame of values for EAMSD in units seconds and um^2
+    ensMSD = msd.ensemble_averaged(tracks=trackArray, ftime=frameTime, pwidth=pixelWidth)
+    # Plots the returned values and outputs the plot
+
+
+    # Returns a pandas data frame of values for TAMSD
     # Plots the returned values and outputs the plot
 
     # * #################### CURRENT DEBUGGING CODE IS BELOW ####################
@@ -100,42 +110,38 @@ if __name__ == '__main__':
 
     # ! ####################   OLD DEBUGGING CODE IS BELOW   ####################
     # # Set 'r' as trackArray
-    # r = trackArray # ! DONE!
-    # # make a copy to work with of trackArray, store as 's'   # ! DO WE NEED THIS COPY????  NO!!!  DONE!
-    # s = r.copy() # ! DONE! IGNORED!
+    # r = trackArray # * DONE!
+    # # make a copy to work with of trackArray, store as 's'   # * DO WE NEED THIS COPY????  NO!!!  DONE!
+    # s = r.copy() # * DONE! IGNORED!
     # # find the length of the longest track in trackArray
-    # maxVal = 0  # ! DONE!
+    # maxVal = 0  # * DONE!
     # # this returns a list of the lengths of all the tracks
-    # maxVal = [val.shape[0] for val in s if val.shape[0] > maxVal] # ! DONE!
+    # maxVal = [val.shape[0] for val in s if val.shape[0] > maxVal] # * DONE!
     # # make a list of zeros as long as the longest track with 2 columns for x-y
-    # a = np.zeros((max(maxVal), 1), dtype='float') # ! DONE!
+    # a = np.zeros((max(maxVal), 1), dtype='float') # * DONE!
     # # print(a)
 
     # # for each track
-    # for track in s: # ! DONE!
+    # for track in s: # * DONE!
     # # subtrack the origin val from each frame
-    #     diff = track[:,1:3] - track[0,1:3] # ! DONE!
+    #     diff = track[:,1:3] - track[0,1:3] # * DONE!
     # # square those values and sum each row
-    #     diff = np.square(diff).sum(axis=1).reshape(len(diff),1) # ! DONE!
+    #     diff = np.square(diff).sum(axis=1).reshape(len(diff),1) # * DONE!
     # # add thos values to the total msd matrix, column 1
-    #     b = np.sum(np.stack((a[:len(diff)], diff)), axis=0) # ! DONE!
-    #     a[:len(diff)] = b # ! DONE!
+    #     b = np.sum(np.stack((a[:len(diff)], diff)), axis=0) # * DONE!
+    #     a[:len(diff)] = b # * DONE!
     # # divide by the number of tracks
-    # a = a / len(s) # ! DONE!
+    # a = a / len(s) # * DONE!
 
     # # Now add in the lag times...
     # # first assume a time per frame of 50 ms
-    # frame_time = .050
-    # timing = (np.arange(0, len(a), dtype='float').reshape(100,1)) * frame_time
-    # a = np.append(timing, a, axis = 1)
-    # a = pd.DataFrame(a)
-    # a.columns = ["Lag Time","EAMSD"]
-    # # a.set_index('Lag Time', drop=True, inplace=True)  # ! Unused - sets an arbitrary column as the index, in this case 'Lag Time'
-    # a.dropna(inplace=True)
-
-
-
-        # ! Test this when you return from coffee, it should result in a single matrix with size 100 x 2 that is the ensemble diffs of all tracks, in this test case 2 tracks
+    # frame_time = .050 # * DONE!
+    # timing = (np.arange(0, len(a), dtype='float').reshape(100,1)) * frame_time # * DONE!
+    # a = np.append(timing, a, axis = 1) # * DONE!
+    # a = pd.DataFrame(a) # * DONE!
+    # a.columns = ["Lag Time","EAMSD"] # * DONE!
+    # # a.set_index('Lag Time', drop=True, inplace=True)  # * Unused - sets an arbitrary column as the index, in this case 'Lag Time'
+    # a.dropna(inplace=True) # * DONE!
 
     # print(s[0][0,1:3])
     # print(s[0][0])
