@@ -11,7 +11,7 @@ class json_loader(object):
         return self.arrNan
 
 
-# * This class remains unused, for reference for now
+# * This class remains unused, and is for reference for now
 class taMSD(object):
     def iMSD(self, traj, dt, with_nan=True):
         self.shifts = np.arange(1, len(traj), dtype='int')
