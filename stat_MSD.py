@@ -1,6 +1,7 @@
 import codecs
 import json
 import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
 
 class json_loader(object):
@@ -75,7 +76,13 @@ class MSD(object):
         return self.ensMSD
 
     def plot_eaMSD(self, save_path, eaMSD_coords):
-        # ! This is where the next code needs to go
+        # ! This is where the next code needs to go -- NEED TO ADD STDEV and ERROR CLOUD to plot!!!
+        self.df = eaMSD_coords
+        ax = plt.gca()
+
+        self.df.plot(kind='line',x='Lag Time',y='EAMSD',ax=ax)
+        ax.set(xlabel="Lag Time (s)", ylabel=r"MSD ($\mu$$m^2$)")
+        plt.show()
         return None
 
 if __name__ == '__main__':
@@ -100,7 +107,7 @@ if __name__ == '__main__':
     # Returns a pandas data frame of values for EAMSD in units seconds and um^2
     ensMSD = msd.ensemble_averaged(tracks=trackArray, ftime=frameTime, pwidth=pixelWidth)
     # Plots the returned values and outputs the plot
-
+    msd.plot_eaMSD(savePath, ensMSD)
 
     # Returns a pandas data frame of values for TAMSD
     # Plots the returned values and outputs the plot
