@@ -1,7 +1,6 @@
 import codecs
 import warnings
 from warnings import warn
-import six
 import json
 import numpy as np
 import matplotlib.pyplot as plt
@@ -23,9 +22,37 @@ class json_track_loader(object):
         self.tracks_df = pd.DataFrame({'particle':lst_part, 'frame':lst_frame, 'x':lst_x, 'y':lst_y})
         return self.tracks_df
 
+
+class stat_MSD(object):
     def pandas_concat(self, *args, **kwargs):
         kwargs.setdefault('sort', False)
         return pd.concat(*args, **kwargs)
+
+    def pandas_rolling(self, df, window, *args, **kwargs):
+        """ Use rolling to compute a rolling average
+        """
+        return df.rolling(window, *args, **kwargs).mean()
+
+    def pandas_sort(df, by, *args, **kwargs):
+        if df.index.name is not None and df.index.name in by:
+            df.index.name += '_index'
+        return df.sort_values(*args, by=by, **kwargs)
+
+    def compute_drift(self, tracks, smoothing=0, pos_columns=['x', 'y']):
+        """ Return the ensemble drift, xy(t)
+        """
+        f_sort = stat.pandas_sort(tracks, ['particle', 'frame'])
+        f_diff = f_sort[list(pos_columns) + ['particle', 'frame']].diff()
+
+        f_diff.rename(columns={'frame': 'frame_diff'}, inplace=True)
+        f_diff['frame'] = f_sort['frame']
+
+        # Compute per frame averages and keep deltas of same particle and b/w frames that are consecutive
+        mask = (f_diff['particle'] ==0) & (f_diff['frame_diff'] == 1)
+        dx = f_diff.loc[mask, pos_columns + ['frame']].groupby('frame').mean()
+        if smoothing > 0:
+            dx = stat.pandas_rolling(dx, smoothing, min_periods=0)
+        return dx.cumsum()
 
     def msd_N(self, N, t):
         """Computes the effective number of statistically independent measurements of 
@@ -68,13 +95,13 @@ class json_track_loader(object):
 
         lagtimes = np.arange(1, max_lagtime + 1)
 
-        results = pd.DataFrame(jtl.msd_iter(self.pos.values, lagtimes), columns=result_columns, index=lagtimes)
+        results = pd.DataFrame(stat.msd_iter(self.pos.values, lagtimes), columns=result_columns, index=lagtimes)
 
         results['msd'] = results[result_columns[-len(pos_columns):]].sum(1)
         if detail:
             # effective number of measurements
             # approximately corrected with number of gaps
-            results['N'] = jtl.msd_N(len(self.pos), lagtimes) * (len(self.track) / len(self.pos))
+            results['N'] = stat.msd_N(len(self.pos), lagtimes) * (len(self.track) / len(self.pos))
         results['lagt'] = results.index.values/float(frameTime)
         results.index.name = 'lagt'
         return results
@@ -84,9 +111,9 @@ class json_track_loader(object):
         self.msds = []
         self.tracks = tracks
         for particle, track in self.tracks.groupby('particle'):
-            self.msds.append(jtl.msdNan(track, pixelWidth, frameTime, max_lagtime, pos_columns, detail=True))
+            self.msds.append(stat.msdNan(track, pixelWidth, frameTime, max_lagtime, pos_columns, detail=True))
             self.ids.append(particle)
-        results = jtl.pandas_concat(self.msds, keys=self.ids)
+        results = stat.pandas_concat(self.msds, keys=self.ids)
         results = results.swaplevel(0, 1)[statistic].unstack()
         lagt = results.index.values.astype('float64')/float(frameTime)
         results.set_index(lagt, inplace=True)
@@ -100,9 +127,9 @@ class json_track_loader(object):
         msds = []
         self.tracks = tracks
         for particle, track in self.tracks.reset_index(drop=True).groupby('particle'):
-            msds.append(jtl.msdNan(track, pixelWidth, frameTime, max_lagtime, pos_columns))
+            msds.append(stat.msdNan(track, pixelWidth, frameTime, max_lagtime, pos_columns))
             ids.append(particle)
-        msds = jtl.pandas_concat(msds, keys=ids, names=['particle', 'frame'])
+        msds = stat.pandas_concat(msds, keys=ids, names=['particle', 'frame'])
         results = msds.mul(msds['N'], axis=0).mean(level=1)
         results = results.div(msds['N'].mean(level=1), axis=0)
         if not detail:
@@ -124,62 +151,14 @@ if __name__ == '__main__':
     jtl = json_track_loader()
     tracks = jtl.json_to_dataframe(fileLoadPath)
 
+    stat = stat_MSD()
 
+    # plot all indiv trajectories
+
+    # plot ensemble trajectories
     # * #################### CURRENT DEBUGGING CODE IS BELOW ####################
-    print(tracks)
-    results = jtl.ensa_msd(tracks, pixelWidth, frameTime)
-    print(results)
 
+    results = stat.ensa_msd(tracks, pixelWidth, frameTime)
+ 
 
     # ! ####################   OLD DEBUGGING CODE IS BELOW   ####################
-    # # Set 'r' as trackArray
-    # r = trackArray # * DONE!
-    # # make a copy to work with of trackArray, store as 's'   # * DO WE NEED THIS COPY????  NO!!!  DONE!
-    # s = r.copy() # * DONE! IGNORED!
-    # # find the length of the longest track in trackArray
-    # maxVal = 0  # * DONE!
-    # # this returns a list of the lengths of all the tracks
-    # maxVal = [val.shape[0] for val in s if val.shape[0] > maxVal] # * DONE!
-    # # make a list of zeros as long as the longest track with 2 columns for x-y
-    # a = np.zeros((max(maxVal), 1), dtype='float') # * DONE!
-    # # print(a)
-
-    # # for each track
-    # for track in s: # * DONE!
-    # # subtrack the origin val from each frame
-    #     diff = track[:,1:3] - track[0,1:3] # * DONE!
-    # # square those values and sum each row
-    #     diff = np.square(diff).sum(axis=1).reshape(len(diff),1) # * DONE!
-    # # add thos values to the total msd matrix, column 1
-    #     b = np.sum(np.stack((a[:len(diff)], diff)), axis=0) # * DONE!
-    #     a[:len(diff)] = b # * DONE!
-    # # divide by the number of tracks
-    # a = a / len(s) # * DONE!
-
-    # # Now add in the lag times...
-    # # first assume a time per frame of 50 ms
-    # frame_time = .050 # * DONE!
-    # timing = (np.arange(0, len(a), dtype='float').reshape(100,1)) * frame_time # * DONE!
-    # a = np.append(timing, a, axis = 1) # * DONE!
-    # a = pd.DataFrame(a) # * DONE!
-    # a.columns = ["Lag Time","EAMSD"] # * DONE!
-    # # a.set_index('Lag Time', drop=True, inplace=True)  # * Unused - sets an arbitrary column as the index, in this case 'Lag Time'
-    # a.dropna(inplace=True) # * DONE!
-
-    # print(s[0][0,1:3])
-    # print(s[0][0])
-    # diff = s[0][:,1:3] - s[0][0,1:3]
-    # print(diff)
-    # diff = np.square(diff).sum(axis=1)
-    # print(diff)
-    # print(type(diff))
-
-
-    # for val in s:
-    #     if val.shape[0] > max:
-    #         max = val.shape[0]
-    #     print(max)
-
-    # Tracks can be accessed by index, i.e. trackArray[0], trackArray[1], etc.
-    # Frame index: trackArray[0][:,0]    X-coords: trackArray[0][:,1]   Y-coords: trackArray[0][:,2]  XY-coords: trackArray[0][:,1:3]
-    # XY-coord of 0th frame trackArray[0][0,1:3]
