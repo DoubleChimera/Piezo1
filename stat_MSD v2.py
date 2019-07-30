@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 from pandas import DataFrame, Series
+import math
 
 class json_track_loader(object):
     def json_to_dataframe(self, file_path):
@@ -33,7 +34,7 @@ class stat_MSD(object):
         """
         return df.rolling(window, *args, **kwargs).mean()
 
-    def pandas_sort(df, by, *args, **kwargs):
+    def pandas_sort(self, df, by, *args, **kwargs):
         if df.index.name is not None and df.index.name in by:
             df.index.name += '_index'
         return df.sort_values(*args, by=by, **kwargs)
@@ -131,6 +132,7 @@ class stat_MSD(object):
             ids.append(particle)
         msds = stat.pandas_concat(msds, keys=ids, names=['particle', 'frame'])
         results = msds.mul(msds['N'], axis=0).mean(level=1)
+        results_stderr = results.div(msds['N'].sem(level=1), axis=0)
         results = results.div(msds['N'].mean(level=1), axis=0)
         if not detail:
             return results.set_index('lagt')['msd']
@@ -148,17 +150,44 @@ if __name__ == '__main__':
 
     #################### * END OF USER INPUTS * ###################
     frameTime = 1000 / frameTime  # Converts frame time to frames-per-second
+    # Instantiate the json_track_loader class, pull data into a pandas DataFrame
     jtl = json_track_loader()
     tracks = jtl.json_to_dataframe(fileLoadPath)
-
+    # Instantiate the stat_MSD class
     stat = stat_MSD()
 
     # plot all indiv trajectories
+    # run indiv_msd
+    indiv_msds = stat.indiv_msd(tracks, pixelWidth, frameTime)
+    # get half the track lengths
+    half_indiv_msds = pd.DataFrame(index=indiv_msds.index[0:(int(math.floor(indiv_msds.count().max()/2)))])
+    for track in indiv_msds:
+        half_indiv_msds = half_indiv_msds.join(indiv_msds[track][0:(round((indiv_msds[track].last_valid_index()/2)/0.05)*0.05)])
+    # plot results as half track lengths
+    fig, ax = plt.subplots()
+    ax.plot(half_indiv_msds.index, half_indiv_msds, 'k-', alpha=0.2)
+    ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]', xlabel='lag times $t$')
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    plt.show()
+
+    #run ensa_msd
+    ensa_msds = stat.ensa_msd(tracks, pixelWidth, frameTime)
+    # plot results as half the track lengths by modifiying plotting window
+    fig, ax = plt.subplots()
+    ax.plot(ensa_msds['lagt'], ensa_msds['msd'], 'o')
+    ax.set(xscale='log', yscale='log')
+    # ax.set_xscale('log')
+    # ax.set_yscale('log')
+    ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]', xlabel='lag time $s$')
+    half_x_max = round((ensa_msds['lagt'].max()/2)/0.05)*0.05
+    ax.set(ylim=(5e-3, 2e-1), xlim=(3e-2, half_x_max));
+    # ax.set(xlim(0, half the max lagtime));
+    plt.show()
 
     # plot ensemble trajectories
     # * #################### CURRENT DEBUGGING CODE IS BELOW ####################
 
-    results = stat.ensa_msd(tracks, pixelWidth, frameTime)
- 
+    
 
     # ! ####################   OLD DEBUGGING CODE IS BELOW   ####################
