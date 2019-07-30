@@ -156,38 +156,40 @@ if __name__ == '__main__':
     # Instantiate the stat_MSD class
     stat = stat_MSD()
 
-    # plot all indiv trajectories
-    # run indiv_msd
+    # * Time-averaged mean squared displacement
     indiv_msds = stat.indiv_msd(tracks, pixelWidth, frameTime)
+
     # get half the track lengths
     half_indiv_msds = pd.DataFrame(index=indiv_msds.index[0:(int(math.floor(indiv_msds.count().max()/2)))])
     for track in indiv_msds:
         half_indiv_msds = half_indiv_msds.join(indiv_msds[track][0:(round((indiv_msds[track].last_valid_index()/2)/0.05)*0.05)])
+
     # plot results as half track lengths
     fig, ax = plt.subplots()
     ax.plot(half_indiv_msds.index, half_indiv_msds, 'k-', alpha=0.2)
     ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]', xlabel='lag times $t$')
     ax.set_xscale('log')
     ax.set_yscale('log')
+
     plt.show()
 
-    #run ensa_msd
+
+    # * Ensemble average mean squared displacement
     ensa_msds = stat.ensa_msd(tracks, pixelWidth, frameTime)
+
     # plot results as half the track lengths by modifiying plotting window
     fig, ax = plt.subplots()
     ax.plot(ensa_msds['lagt'], ensa_msds['msd'], 'o')
     ax.set(xscale='log', yscale='log')
-    # ax.set_xscale('log')
-    # ax.set_yscale('log')
     ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]', xlabel='lag time $s$')
     half_x_max = round((ensa_msds['lagt'].max()/2)/0.05)*0.05
     ax.set(ylim=(5e-3, 2e-1), xlim=(3e-2, half_x_max));
-    # ax.set(xlim(0, half the max lagtime));
+
     plt.show()
 
 
     # * #################### CURRENT DEBUGGING CODE IS BELOW ####################
 
-    
+    # ! just do a log-log fit, no power law fits
 
     # ! ####################   OLD DEBUGGING CODE IS BELOW   ####################
