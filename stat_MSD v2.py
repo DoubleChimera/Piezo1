@@ -73,7 +73,7 @@ class stat_MSD(object):
             yield np.concatenate((np.nanmean(diff, axis=0), np.nanmean(diff**2, axis=0)))
 
     def msdNan(self, track, pixelWidth, frameTime, max_lagtime=100, pos_columns=None, detail=True):
-        """ Compute the mean displacement and mean squared displacement of one trajectory over a 
+        """ Compute the mean displacement and mean squared displacement of one trajectory over a
             range of time intervals.
         """
         self.track = track
@@ -185,7 +185,7 @@ if __name__ == '__main__':
     # ax.set(xlim(0, half the max lagtime));
     plt.show()
 
-    # plot ensemble trajectories
+
     # * #################### CURRENT DEBUGGING CODE IS BELOW ####################
 
     
