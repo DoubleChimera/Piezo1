@@ -53,7 +53,7 @@ class MSD(object):
         self.tracks = tracks
         self.ftime = ftime
         maxVal = 0
-        maxVal = [val.shape[0] for val in tracks if val.shape[0] > maxVal]  # This returns a list of maxVals for each track, use max(maxVal) for absolute max value
+        maxVal = [val.shape[0] for val in tracks if val.shape[0] > maxVal]  # This returns a list of maxVals for each track length, use max(maxVal) for absolute max value
         self.ensMSD = np.zeros((max(maxVal), 1), dtype='float')
 
         for track in tracks:
@@ -75,14 +75,33 @@ class MSD(object):
         # returns pandas data frame with lag time in seconds <r^2(del)> in um^2
         return self.ensMSD
 
-    def plot_eaMSD(self, save_path, eaMSD_coords):
+    def plot_eaMSD(self, save_path, eaMSDs):
         # ! This is where the next code needs to go -- NEED TO ADD STDEV and ERROR CLOUD to plot!!!
-        self.df = eaMSD_coords
+        self.df = eaMSDs
         ax = plt.gca()
-
         self.df.plot(kind='line',x='Lag Time',y='EAMSD',ax=ax)
         ax.set(xlabel="Lag Time (s)", ylabel=r"MSD ($\mu$$m^2$)")
         plt.show()
+        return None
+
+    def eaMSD_errors(self, tracks, eaMSDs, ftime, pwidth):
+        self.tracks = tracks
+        self.ftime = ftime
+        self.eaMSDs = eaMSDs
+        maxVal = 0
+        maxVal = [val.shape[0] for val in tracks if val.shape[0] > maxVal]  # This returns a list of maxVals for each track length, use max(maxVal) for absolute max value
+        self.ensMSD_errors = np.zeros((max(maxVal), 1), dtype='float')
+
+        for track in tracks:
+            diff = track[:,1:3] - track[0,1:3]
+            # adjust pixel values to um distances using pwidth
+            diff = diff * pwidth
+            diff = np.square(diff).sum(axis=1).reshape(len(diff),1)
+            diff - 
+            self.indivSum = np.nansum(np.stack((self.ensMSD[:len(diff)], diff)), axis=0)
+            self.ensMSD[:len(diff)] = self.indivSum
+
+        self.ensMSD = self.ensMSD / len(tracks)
         return None
 
 if __name__ == '__main__':
