@@ -97,7 +97,6 @@ class MSD(object):
             # adjust pixel values to um distances using pwidth
             diff = diff * pwidth
             diff = np.square(diff).sum(axis=1).reshape(len(diff),1)
-            diff - 
             self.indivSum = np.nansum(np.stack((self.ensMSD[:len(diff)], diff)), axis=0)
             self.ensMSD[:len(diff)] = self.indivSum
 

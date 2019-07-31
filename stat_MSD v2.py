@@ -131,7 +131,7 @@ class stat_MSD(object):
             ids.append(particle)
         msds = stat.pandas_concat(msds, keys=ids, names=['particle', 'frame'])
         results = msds.mul(msds['N'], axis=0).mean(level=1)
-        results_stderr = results.div(msds['N'].sem(level=1), axis=0)
+        # results_stderr = results.div(msds['N'].sem(level=1), axis=0)  # ! USE THIS FOR STANDARD ERROR - MAKING THE CLOUD :)
         results = results.div(msds['N'].mean(level=1), axis=0)
         if not detail:
             return results.set_index('lagt')['msd']
@@ -186,7 +186,7 @@ if __name__ == '__main__':
     ax.set(xscale='log', yscale='log')
     ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]', xlabel='lag time [$s$]')
     half_x_max = round((ensa_msds['lagt'].max()/2)/0.05)*0.05
-    ax.set(ylim=(5e-3, 2e-1), xlim=(3e-2, half_x_max));
+    ax.set(ylim=(5e-3, 2e-1), xlim=(3e-2, half_x_max))
 
     # Linear fit to plot data
     slope, intercept, r_value, p_value, std_err = stats.linregress(ensa_msds['lagt'][0:15],ensa_msds['msd'][0:15])
