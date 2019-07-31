@@ -1,12 +1,11 @@
 import codecs
 import warnings
-from warnings import warn
 import json
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
-from pandas import DataFrame, Series
 import math
+import scipy.stats as stats
 
 class json_track_loader(object):
     def json_to_dataframe(self, file_path):
@@ -118,7 +117,7 @@ class stat_MSD(object):
         results = results.swaplevel(0, 1)[statistic].unstack()
         lagt = results.index.values.astype('float64')/float(frameTime)
         results.set_index(lagt, inplace=True)
-        results.index.name = 'lag time [s]'
+        results.index.name = 'lagt'
         return results
 
     def ensa_msd(self, tracks, pixelWidth, frameTime, max_lagtime=100, detail=True, pos_columns=None):
@@ -164,10 +163,14 @@ if __name__ == '__main__':
     for track in indiv_msds:
         half_indiv_msds = half_indiv_msds.join(indiv_msds[track][0:(round((indiv_msds[track].last_valid_index()/2)/0.05)*0.05)])
 
+    # Average track of all tracks
+    avg_half_msd = half_indiv_msds.mean(axis=1)
+
     # plot results as half track lengths
     fig, ax = plt.subplots()
     ax.plot(half_indiv_msds.index, half_indiv_msds, 'k-', alpha=0.2)
-    ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]', xlabel='lag times $t$')
+    ax.plot(avg_half_msd.index, avg_half_msd,'r-', alpha=1, linewidth=3)
+    ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]', xlabel='lag times [$s$]')
     ax.set_xscale('log')
     ax.set_yscale('log')
 
@@ -181,9 +184,16 @@ if __name__ == '__main__':
     fig, ax = plt.subplots()
     ax.plot(ensa_msds['lagt'], ensa_msds['msd'], 'o')
     ax.set(xscale='log', yscale='log')
-    ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]', xlabel='lag time $s$')
+    ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]', xlabel='lag time [$s$]')
     half_x_max = round((ensa_msds['lagt'].max()/2)/0.05)*0.05
     ax.set(ylim=(5e-3, 2e-1), xlim=(3e-2, half_x_max));
+
+    # Linear fit to plot data
+    slope, intercept, r_value, p_value, std_err = stats.linregress(ensa_msds['lagt'][0:15],ensa_msds['msd'][0:15])
+    line = (slope*ensa_msds['lagt']+intercept)
+    line = pd.DataFrame({'lagt':ensa_msds['lagt'], 'Avg_eamsd':line.values})
+
+    ax.plot(line['lagt'], line['Avg_eamsd'], '-r', linewidth=3)
 
     plt.show()
 
@@ -192,4 +202,4 @@ if __name__ == '__main__':
 
     # ! just do a log-log fit, no power law fits
 
-    # ! ####################   OLD DEBUGGING CODE IS BELOW   ####################
+    # ! ####################   OLD DEBUGGING CODE IS BELOW   ####################warn
