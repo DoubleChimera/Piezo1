@@ -200,6 +200,6 @@ if __name__ == '__main__':
 
     # * #################### CURRENT DEBUGGING CODE IS BELOW ####################
 
-    # ! just do a log-log fit, no power law fits
+    # ! plots need: legends, larger labels, titles, fitting-data, error clouds
 
     # ! ####################   OLD DEBUGGING CODE IS BELOW   ####################warn
