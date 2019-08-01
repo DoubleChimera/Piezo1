@@ -201,5 +201,6 @@ if __name__ == '__main__':
     # * #################### CURRENT DEBUGGING CODE IS BELOW ####################
 
     # ! plots need: legends, larger labels, titles, fitting-data, error clouds
+    # ! Make a new class for plotting all the data
 
     # ! ####################   OLD DEBUGGING CODE IS BELOW   ####################warn
