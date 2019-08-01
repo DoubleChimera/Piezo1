@@ -1,15 +1,16 @@
 # Editing Lasso Example to be track selector, will remain to track_selector.py when done
 
-import numpy as np
-import os.path
-import pandas as pd
-import file_loader as fl
-import time
-import json
 import codecs
-
-from matplotlib.widgets import LassoSelector
+import json
+import os.path
+import time
+import numpy as np
+import pandas as pd
 from matplotlib.path import Path
+from matplotlib.widgets import LassoSelector
+import sys
+import cv2
+import file_loader as fl
 
 
 class SelectFromCollection(object):
@@ -124,11 +125,24 @@ class NumpyEncoder(json.JSONEncoder):
         return json.JSONEncoder.default(self, obj)
 
 
+class imgPreProcess(object):
+    def isDicFile(self, imgPath):
+        if "_dic_" in imgPath:
+            img = cv2.imread(imgPath)
+            im2 = img.copy()
+            im2[:, :, 0] = img[:, :, 2]
+            im2[:, :, 2] = img[:, :, 0]
+            return im2
+        else:
+            img = plt.imread(imgPath)
+            return img
+
+
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
     # * USER INPUTS GO BELOW * #
     filename = r'/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Piezo1 Trajectory for Analysis/2018_Nov_tirfm_tdtpiezo_5sec/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
-    tifFile = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/test_images/test1.tiff'
+    tifFile = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/test_images/AL_12_2019-05-30-TIRFM_Diff_tdt-mNSPCs_1_dic_MMStack_Pos0.ome.tif'
     save_path = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp'
     minfrm = 20
     # * END OF USER INPUTS * #
@@ -137,14 +151,17 @@ if __name__ == '__main__':
     lst, lstnan, trackOrigins = fl.gen_indiv_tracks(save_path, minfrm, tracks, txy_pts)
     xvals, yvals = SelectFromCollection.select_tracks_plot(trackOrigins)
 
-    img = plt.imread(tifFile)
+    iPP = imgPreProcess()
+    img = iPP.isDicFile(tifFile)
 
     subplot_kw = dict(xlim=(0, 1024), ylim=(1024, 0), autoscale_on=False)
     fig, ax = plt.subplots(subplot_kw=subplot_kw, figsize=(10,10))
 
     pts = ax.scatter(xvals, yvals, s=5, c='chartreuse')
     selector = SelectFromCollection(ax, pts)
-    implot = plt.imshow(img)
+    imgplot = plt.imshow(img)
+
+    # implot = plt.imshow(img)
 
 
     def accept(event):
