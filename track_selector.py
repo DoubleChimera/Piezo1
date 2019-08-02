@@ -160,15 +160,11 @@ if __name__ == '__main__':
     selector = SelectFromCollection(ax, pts)
     imgplot = plt.imshow(img)
 
-
-
-
     def accept(event):
         if event.key == "enter":
             selector.disconnect()
             ax.set_title("")
             plt.close()
-
 
     def plotReturn():
         fig.canvas.mpl_connect("key_press_event", accept)
@@ -177,7 +173,6 @@ if __name__ == '__main__':
         plt.show()
         lassoPoints = selector.xys[selector.ind]
         return lassoPoints
-
 
     lassoPoints = plotReturn()
 
