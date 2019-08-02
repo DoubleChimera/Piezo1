@@ -202,33 +202,61 @@ class plot_MSD(object):
         ax.set_xlabel('lag times [$s$]', fontsize=15)
         # Position the axes labels
         ax.xaxis.set_label_coords(0.5, -0.07)
-        # Display the plot
+        # Display the TAMSD plot
         plt.show()
 
     def plot_EAMSD(self, ensa_msds):
         self.ensa_msds = ensa_msds
-        # plot results as half the track lengths by modifiying plotting window
-        fig, ax = plt.subplots()
-        ax.plot(self.ensa_msds['lagt'], self.ensa_msds['msd'], 'o')
-        ax.set(xscale='log', yscale='log')
-        ax.set_ylabel = r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]'
-        ax.set_xlabel = 'lag time [$s$]'
-        self.half_x_max = round((self.ensa_msds['lagt'].max() / 2) / 0.05) * 0.05
-        ax.set(ylim=(5e-3, 2e-1), xlim=(3e-2, self.half_x_max))
-
-        # Linear fit to plot data
+        # Plot results as half the track lengths by modifiying plotting window
+        fig, ax = plt.subplots(figsize=(10,5))
+        # Plot EAMSD of tracks
+        ax.plot(self.ensa_msds['lagt'],
+                self.ensa_msds['msd'],
+                'o',
+                label="Ensemble Average MSD")
+        # Determine linear fit to data
+        # Set number of initial points to fit
+        self.fit_range = 15
         (self.slope,
          self.intercept,
          self.r_value,
          self.p_value,
-         self.std_err) = stats.linregress(self.ensa_msds['lagt'][0:15],
-                                          self.ensa_msds['msd'][0:15])
+         self.std_err) = stats.linregress(self.ensa_msds['lagt'][0:self.fit_range],
+                                          self.ensa_msds['msd'][0:self.fit_range])
         self.line = (self.slope * self.ensa_msds['lagt'] + self.intercept)
         self.line = pd.DataFrame({'lagt': self.ensa_msds['lagt'],
                                   'Avg_eamsd': self.line.values})
-
-        ax.plot(self.line['lagt'], self.line['Avg_eamsd'], '-r', linewidth=3)
-
+        # Plot linear fit of EAMSD data
+        ax.plot(self.line['lagt'],
+                self.line['Avg_eamsd'],
+                '-r',
+                linewidth=3,
+                label="Linear Fit")
+        # Set the scale of the axes to 'log'
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+        # Set the window title
+        fig = plt.gcf()
+        fig.canvas.set_window_title('Ensemble-Averaged MSD')
+        # Set the legend
+        ax.legend(loc='upper left', fontsize=12)
+        # Set the headline/title for the plot
+        fig.suptitle('Ensemble-Averaged MSD with a Linear Fit', fontsize=20)
+        # Set the axes labels
+        ax.set_ylabel(r'$\langle \overline{\delta^2 (\Delta)} \rangle$ [$\mu$m$^2$]', fontsize=15)
+        ax.set_xlabel('lag time [$s$]', fontsize=15)
+        # Position the axes labels
+        ax.xaxis.set_label_coords(0.5, -0.07)
+        # Determine and set x-lim and y-lim of plot
+        self.half_x_max = round((self.ensa_msds['lagt'].max() / 2) / 0.05) * 0.05
+        self.x_min = 4e-2
+        self.x_range = self.half_x_max - self.x_min
+        print("x-max: " + str(self.half_x_max))
+        print("x-range: "+ str(self.x_range))
+        self.y_min = 5e-3
+        self.y_max = round((self.y_min + self.x_range - 2.3), 2)
+        ax.set(ylim=(self.y_min, self.y_max), xlim=(self.x_min, self.half_x_max))
+        # Display the EAMSD plot
         plt.show()
 
 
