@@ -1,3 +1,5 @@
+# Calcs statistics - MSD
+
 import codecs
 import warnings
 import json
@@ -7,6 +9,7 @@ import pandas as pd
 import math
 import scipy.stats as stats
 
+
 class json_track_loader(object):
     def json_to_dataframe(self, file_path):
         self.objLoad = codecs.open(file_path, 'r', encoding='utf-8').read()
@@ -15,11 +18,14 @@ class json_track_loader(object):
 
         lst_part, lst_frame, lst_x, lst_y = ([] for i in range(4))
         for particle, track in enumerate(self.arrNan):
-            lst_part.extend([particle]*len(track))
-            lst_frame.extend(np.ndarray.tolist(track[:,0]))
-            lst_x.extend(np.ndarray.tolist(track[:,1]))
-            lst_y.extend(np.ndarray.tolist(track[:,2]))
-        self.tracks_df = pd.DataFrame({'particle':lst_part, 'frame':lst_frame, 'x':lst_x, 'y':lst_y})
+            lst_part.extend([particle] * len(track))
+            lst_frame.extend(np.ndarray.tolist(track[:, 0]))
+            lst_x.extend(np.ndarray.tolist(track[:, 1]))
+            lst_y.extend(np.ndarray.tolist(track[:, 2]))
+        self.tracks_df = pd.DataFrame({'particle': lst_part,
+                                       'frame': lst_frame,
+                                       'x': lst_x,
+                                       'y': lst_y})
         return self.tracks_df
 
 
@@ -47,22 +53,24 @@ class stat_MSD(object):
         f_diff.rename(columns={'frame': 'frame_diff'}, inplace=True)
         f_diff['frame'] = f_sort['frame']
 
-        # Compute per frame averages and keep deltas of same particle and b/w frames that are consecutive
-        mask = (f_diff['particle'] ==0) & (f_diff['frame_diff'] == 1)
+        # Compute per frame averages and keep deltas of same particle
+        # and b/w frames that are consecutive
+        mask = (f_diff['particle'] == 0) & (f_diff['frame_diff'] == 1)
         dx = f_diff.loc[mask, pos_columns + ['frame']].groupby('frame').mean()
         if smoothing > 0:
             dx = stat.pandas_rolling(dx, smoothing, min_periods=0)
         return dx.cumsum()
 
     def msd_N(self, N, t):
-        """Computes the effective number of statistically independent measurements of 
+        """Computes the effective number of statistically independent measurements of
            the mean square displacement of a single trajectory
         """
 
         t = np.array(t, dtype=np.float)
-        return np.where(t > N/2, 
-                        1/(1+((N-t)**3+5*t-4*(N-t)**2*t-N)/(6*(N-t)*t**2)),
-                        6*(N-t)**2*t/(2*N-t+4*N*t**2-5*t**3))
+
+        return np.where(t > N / 2,
+                        1 / (1 + ((N - t) ** 3 + 5 * t - 4 * (N - t) ** 2 * t - N) / (6 * (N - t) * t ** 2)),
+                        6 * (N - t) ** 2 * t / (2 * N - t + 4 * N * t ** 2 - 5 * t ** 3))
 
     def msd_iter(self, pos, lagtimes):
         with warnings.catch_warnings():
@@ -85,42 +93,49 @@ class stat_MSD(object):
             self.pos = self.track.set_index('frame')[pos_columns] * pixelWidth
             self.pos = self.pos.reindex(np.arange(self.pos.index[0], 1 + self.pos.index[-1]))
         except ValueError:
-            if track['frame'].nunique()!=len(self.track['frame']):
+            if track['frame'].nunique() != len(self.track['frame']):
                 raise Exception("Cannot use msdNan, more than one trajectory "
                                 "per particle found.")
             else:
                 raise
 
-        max_lagtime = min(max_lagtime, len(self.pos) - 1) # checking to be safe
+        # checking to be safe
+        max_lagtime = min(max_lagtime, len(self.pos) - 1)
 
         lagtimes = np.arange(1, max_lagtime + 1)
 
-        results = pd.DataFrame(stat.msd_iter(self.pos.values, lagtimes), columns=result_columns, index=lagtimes)
+        results = pd.DataFrame(stat.msd_iter(self.pos.values, lagtimes),
+                               columns=result_columns, index=lagtimes)
 
         results['msd'] = results[result_columns[-len(pos_columns):]].sum(1)
         if detail:
             # effective number of measurements
             # approximately corrected with number of gaps
             results['N'] = stat.msd_N(len(self.pos), lagtimes) * (len(self.track) / len(self.pos))
-        results['lagt'] = results.index.values/float(frameTime)
+        results['lagt'] = results.index.values / float(frameTime)
         results.index.name = 'lagt'
         return results
 
-    def indiv_msd(self, tracks, pixelWidth, frameTime, max_lagtime=100, statistic='msd', pos_columns=None):
+    def indiv_msd(self, tracks,
+                  pixelWidth, frameTime,
+                  max_lagtime=100, statistic='msd',
+                  pos_columns=None):
         self.ids = []
         self.msds = []
         self.tracks = tracks
         for particle, track in self.tracks.groupby('particle'):
-            self.msds.append(stat.msdNan(track, pixelWidth, frameTime, max_lagtime, pos_columns, detail=True))
+            self.msds.append(stat.msdNan(track, pixelWidth, frameTime,
+                                         max_lagtime, pos_columns, detail=True))
             self.ids.append(particle)
         results = stat.pandas_concat(self.msds, keys=self.ids)
         results = results.swaplevel(0, 1)[statistic].unstack()
-        lagt = results.index.values.astype('float64')/float(frameTime)
+        lagt = results.index.values.astype('float64') / float(frameTime)
         results.set_index(lagt, inplace=True)
         results.index.name = 'lagt'
         return results
 
-    def ensa_msd(self, tracks, pixelWidth, frameTime, max_lagtime=100, detail=True, pos_columns=None):
+    def ensa_msd(self, tracks, pixelWidth, frameTime,
+                 max_lagtime=100, detail=True, pos_columns=None):
         """Compute the ensemble mean squared displacement of many particles
         """
         ids = []
@@ -139,6 +154,57 @@ class stat_MSD(object):
         return results
 
 
+class plot_MSD(object):
+    def plot_TAMSD(self, indiv_msds):
+        self.indiv_msds = indiv_msds
+        # get half the track lengths
+        self.indiv_msds_range = (int(math.floor(self.indiv_msds.count().max() / 2)))
+        self.half_indices = self.indiv_msds.index[0:self.indiv_msds_range]
+        self.half_indiv_msds = pd.DataFrame(index=self.half_indices)
+        for track in self.indiv_msds:
+            half_last_index = (round((self.indiv_msds[track].last_valid_index() / 2) / 0.05) * 0.05)
+            self.half_indiv_msds = self.half_indiv_msds.join(self.indiv_msds[track][0:half_last_index])
+
+        # Average track of all tracks
+        self.avg_half_msd = self.half_indiv_msds.mean(axis=1)
+
+        # plot results as half track lengths
+        fig, ax = plt.subplots()
+        ax.plot(self.half_indiv_msds.index, self.half_indiv_msds, 'k-', alpha=0.2)
+        ax.plot(self.avg_half_msd.index, self.avg_half_msd, 'r-', alpha=1, linewidth=3)
+        ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]', xlabel='lag times [$s$]')
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+
+        plt.show()
+
+    def plot_EAMSD(self, ensa_msds):
+        self.ensa_msds = ensa_msds
+        # plot results as half the track lengths by modifiying plotting window
+        fig, ax = plt.subplots()
+        ax.plot(self.ensa_msds['lagt'], self.ensa_msds['msd'], 'o')
+        ax.set(xscale='log', yscale='log')
+        ax.set_ylabel = r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]'
+        ax.set_xlabel = 'lag time [$s$]'
+        self.half_x_max = round((self.ensa_msds['lagt'].max() / 2) / 0.05) * 0.05
+        ax.set(ylim=(5e-3, 2e-1), xlim=(3e-2, self.half_x_max))
+
+        # Linear fit to plot data
+        (self.slope,
+         self.intercept,
+         self.r_value,
+         self.p_value,
+         self.std_err) = stats.linregress(self.ensa_msds['lagt'][0:15],
+                                        self.ensa_msds['msd'][0:15])
+        self.line = (self.slope * self.ensa_msds['lagt'] + self.intercept)
+        self.line = pd.DataFrame({'lagt': self.ensa_msds['lagt'],
+                                  'Avg_eamsd': self.line.values})
+
+        ax.plot(self.line['lagt'], self.line['Avg_eamsd'], '-r', linewidth=3)
+
+        plt.show()
+
+
 if __name__ == '__main__':
     #################### * USER INPUTS BELOW * ####################
     fileLoadPath = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp/Selected_tracks/selected_track_list.json'
@@ -149,58 +215,34 @@ if __name__ == '__main__':
 
     #################### * END OF USER INPUTS * ###################
     frameTime = 1000 / frameTime  # Converts frame time to frames-per-second
-    # Instantiate the json_track_loader class, pull data into a pandas DataFrame
+
+    # Instantiate the json_track_loader class, data into a pandas DataFrame
     jtl = json_track_loader()
     tracks = jtl.json_to_dataframe(fileLoadPath)
+
     # Instantiate the stat_MSD class
     stat = stat_MSD()
 
+    # Instantiate the plot_MSD class
+    pMSD = plot_MSD()
+
     # * Time-averaged mean squared displacement
+    # Get the individual trajectories
     indiv_msds = stat.indiv_msd(tracks, pixelWidth, frameTime)
 
-    # get half the track lengths
-    half_indiv_msds = pd.DataFrame(index=indiv_msds.index[0:(int(math.floor(indiv_msds.count().max()/2)))])
-    for track in indiv_msds:
-        half_indiv_msds = half_indiv_msds.join(indiv_msds[track][0:(round((indiv_msds[track].last_valid_index()/2)/0.05)*0.05)])
-
-    # Average track of all tracks
-    avg_half_msd = half_indiv_msds.mean(axis=1)
-
-    # plot results as half track lengths
-    fig, ax = plt.subplots()
-    ax.plot(half_indiv_msds.index, half_indiv_msds, 'k-', alpha=0.2)
-    ax.plot(avg_half_msd.index, avg_half_msd,'r-', alpha=1, linewidth=3)
-    ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]', xlabel='lag times [$s$]')
-    ax.set_xscale('log')
-    ax.set_yscale('log')
-
-    plt.show()
-
+    # Plot TAMSD
+    pMSD.plot_TAMSD(indiv_msds)
 
     # * Ensemble average mean squared displacement
+    # Get the ensemble msd trajectory
     ensa_msds = stat.ensa_msd(tracks, pixelWidth, frameTime)
 
-    # plot results as half the track lengths by modifiying plotting window
-    fig, ax = plt.subplots()
-    ax.plot(ensa_msds['lagt'], ensa_msds['msd'], 'o')
-    ax.set(xscale='log', yscale='log')
-    ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]', xlabel='lag time [$s$]')
-    half_x_max = round((ensa_msds['lagt'].max()/2)/0.05)*0.05
-    ax.set(ylim=(5e-3, 2e-1), xlim=(3e-2, half_x_max))
-
-    # Linear fit to plot data
-    slope, intercept, r_value, p_value, std_err = stats.linregress(ensa_msds['lagt'][0:15],ensa_msds['msd'][0:15])
-    line = (slope*ensa_msds['lagt']+intercept)
-    line = pd.DataFrame({'lagt':ensa_msds['lagt'], 'Avg_eamsd':line.values})
-
-    ax.plot(line['lagt'], line['Avg_eamsd'], '-r', linewidth=3)
-
-    plt.show()
-
+    # Plot EAMSD
+    pMSD.plot_EAMSD(ensa_msds)
 
     # * #################### CURRENT DEBUGGING CODE IS BELOW ####################
 
     # ! plots need: legends, larger labels, titles, fitting-data, error clouds
     # ! Make a new class for plotting all the data
 
-    # ! ####################   OLD DEBUGGING CODE IS BELOW   ####################warn
+    # ! ####################   OLD DEBUGGING CODE IS BELOW   ####################
