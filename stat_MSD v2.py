@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import math
 import scipy.stats as stats
+from collections import OrderedDict
 
 
 class json_track_loader(object):
@@ -155,6 +156,7 @@ class stat_MSD(object):
 
 
 class plot_MSD(object):
+
     def plot_TAMSD(self, indiv_msds):
         self.indiv_msds = indiv_msds
         # get half the track lengths
@@ -169,13 +171,38 @@ class plot_MSD(object):
         self.avg_half_msd = self.half_indiv_msds.mean(axis=1)
 
         # plot results as half track lengths
-        fig, ax = plt.subplots()
-        ax.plot(self.half_indiv_msds.index, self.half_indiv_msds, 'k-', alpha=0.2)
-        ax.plot(self.avg_half_msd.index, self.avg_half_msd, 'r-', alpha=1, linewidth=3)
-        ax.set(ylabel=r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]', xlabel='lag times [$s$]')
+        fig, ax = plt.subplots(figsize=(10, 5))
+        # Plot individual tracks, set label for legend
+        ax.plot(self.half_indiv_msds.index,
+                self.half_indiv_msds,
+                'k-',
+                alpha=0.2,
+                label='Individual Tracks')
+        # Plot the averaged track, set label for legend
+        ax.plot(self.avg_half_msd.index,
+                self.avg_half_msd,
+                'r-',
+                alpha=1,
+                linewidth=3,
+                label='Averaged Track')
+        # Set the scale of the axes to 'log'
         ax.set_xscale('log')
         ax.set_yscale('log')
-
+        # Set the window title
+        fig = plt.gcf()
+        fig.canvas.set_window_title('Time-Averaged MSD')
+        # Set the legend to show only one entry for indiv tracks
+        handles, labels = plt.gca().get_legend_handles_labels()
+        by_label = OrderedDict(zip(labels, handles))
+        ax.legend(by_label.values(), by_label.keys(), loc='upper left', fontsize=12)
+        # Set the headline/title for the plot
+        fig.suptitle('TAMSD: Average and Individual Tracks', fontsize=20)
+        # Set the axes labels
+        ax.set_ylabel(r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]', fontsize=15)
+        ax.set_xlabel('lag times [$s$]', fontsize=15)
+        # Position the axes labels
+        ax.xaxis.set_label_coords(0.5, -0.07)
+        # Display the plot
         plt.show()
 
     def plot_EAMSD(self, ensa_msds):
@@ -195,7 +222,7 @@ class plot_MSD(object):
          self.r_value,
          self.p_value,
          self.std_err) = stats.linregress(self.ensa_msds['lagt'][0:15],
-                                        self.ensa_msds['msd'][0:15])
+                                          self.ensa_msds['msd'][0:15])
         self.line = (self.slope * self.ensa_msds['lagt'] + self.intercept)
         self.line = pd.DataFrame({'lagt': self.ensa_msds['lagt'],
                                   'Avg_eamsd': self.line.values})
