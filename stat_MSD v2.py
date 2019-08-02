@@ -208,7 +208,7 @@ class plot_MSD(object):
     def plot_EAMSD(self, ensa_msds):
         self.ensa_msds = ensa_msds
         # Plot results as half the track lengths by modifiying plotting window
-        fig, ax = plt.subplots(figsize=(10,5))
+        fig, ax = plt.subplots(figsize=(10, 5))
         # Plot EAMSD of tracks
         ax.plot(self.ensa_msds['lagt'],
                 self.ensa_msds['msd'],
@@ -223,7 +223,6 @@ class plot_MSD(object):
          self.p_value,
          self.std_err) = stats.linregress(self.ensa_msds['lagt'][0:self.fit_range],
                                           self.ensa_msds['msd'][0:self.fit_range])
-        print(self.slope)
         self.line = (self.slope * self.ensa_msds['lagt'] + self.intercept)
         self.line = pd.DataFrame({'lagt': self.ensa_msds['lagt'],
                                   'Avg_eamsd': self.line.values})
@@ -233,6 +232,7 @@ class plot_MSD(object):
                 '-r',
                 linewidth=3,
                 label='Linear Fit: y = {:.2f} x + {:.2f}'.format(self.slope, self.intercept))
+        # Plot error as a cloud around linear fit # ! Not implemented
         # Set the scale of the axes to 'log'
         ax.set_xscale('log')
         ax.set_yscale('log')
