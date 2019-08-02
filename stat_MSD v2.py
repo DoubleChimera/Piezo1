@@ -185,6 +185,7 @@ class plot_MSD(object):
                 alpha=1,
                 linewidth=3,
                 label='Averaged Track')
+        # ! FIGURE OUT THE EQUATION FOR THE FIT AND ADD IT TO LEGEND
         # Set the scale of the axes to 'log'
         ax.set_xscale('log')
         ax.set_yscale('log')
