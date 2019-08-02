@@ -198,7 +198,7 @@ class plot_MSD(object):
         # Set the headline/title for the plot
         fig.suptitle('TAMSD: Average and Individual Tracks', fontsize=20)
         # Set the axes labels
-        ax.set_ylabel(r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]', fontsize=15)
+        ax.set_ylabel(r'$\langle \overline{\delta^2 (\Delta)} \rangle$ [$\mu$m$^2$]', fontsize=15)
         ax.set_xlabel('lag times [$s$]', fontsize=15)
         # Position the axes labels
         ax.xaxis.set_label_coords(0.5, -0.07)
@@ -244,7 +244,7 @@ class plot_MSD(object):
         # Set the headline/title for the plot
         fig.suptitle('Ensemble-Averaged MSD with a Linear Fit', fontsize=20)
         # Set the axes labels
-        ax.set_ylabel(r'$\langle \overline{\delta^2 (\Delta)} \rangle$ [$\mu$m$^2$]', fontsize=15)
+        ax.set_ylabel(r'$\langle \Delta r^2 \rangle$ [$\mu$m$^2$]', fontsize=15)
         ax.set_xlabel('lag time [$s$]', fontsize=15)
         # Position the axes labels
         ax.xaxis.set_label_coords(0.5, -0.07)
