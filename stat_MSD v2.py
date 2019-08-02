@@ -216,8 +216,10 @@ if __name__ == '__main__':
     #################### * END OF USER INPUTS * ###################
     frameTime = 1000 / frameTime  # Converts frame time to frames-per-second
 
-    # Instantiate the json_track_loader class, data into a pandas DataFrame
+    # Instantiate the json_track_loader class
     jtl = json_track_loader()
+
+    # Store data into a pandas DataFrame
     tracks = jtl.json_to_dataframe(fileLoadPath)
 
     # Instantiate the stat_MSD class
