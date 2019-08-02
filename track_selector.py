@@ -11,7 +11,7 @@ from matplotlib.widgets import LassoSelector
 import sys
 import cv2
 import file_loader as fl
-
+import matplotlib.pyplot as plt
 
 class SelectFromCollection(object):
     """Select indices from a matplotlib collection using `LassoSelector`.
@@ -117,6 +117,7 @@ def genSelectedTrackList(allTracks, selectedTrackIndices, img, save_path):
     json.dump(selectedTrackList, cls=NumpyEncoder, fp=codecs.open(outSelTracksDir, 'w', encoding='utf-8'), separators=(',', ':'), sort_keys=True)
     return selectedTrackList
 
+
 class NumpyEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, np.ndarray):
@@ -137,8 +138,36 @@ class imgPreProcess(object):
             return img
 
 
+class trackPlots(object):
+    def lassoPlot(self, filename, save_path, minfrm):
+        self.txy_pts, self.tracks = fl.open_tracks(filename)
+        self.lst, self.lstnan, self.trackOrigins = fl.gen_indiv_tracks(save_path, minfrm, self.tracks, self.txy_pts)
+        self.xvals, self.yvals = SelectFromCollection.select_tracks_plot(self.trackOrigins)
+
+        self.img = iPP.isDicFile(tifFile)
+
+        self.subplot_kw = dict(xlim=(0, 1024), ylim=(1024, 0), autoscale_on=False)
+        self.fig, self.ax = plt.subplots(subplot_kw=self.subplot_kw, figsize=(10,10))
+
+        self.pts = self.ax.scatter(self.xvals, self.yvals, s=5, c='chartreuse')
+        self.selector = SelectFromCollection(self.ax, self.pts)
+        self.imgplot = plt.imshow(self.img)
+
+    def plotReturn(self):
+        self.fig.canvas.mpl_connect("key_press_event", tP.accept)
+        self.ax.set_title("Press enter to accept selected points.")
+        plt.show()
+        self.lassoPoints = self.selector.xys[self.selector.ind]
+        return self.lassoPoints, self.trackOrigins, self.lstnan, self.img
+
+    def accept(self, event):
+        if event.key == "enter":
+            self.selector.disconnect()
+            self.ax.set_title("")
+            plt.close()
+
+
 if __name__ == '__main__':
-    import matplotlib.pyplot as plt
     # * USER INPUTS GO BELOW * #
     filename = r'/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Piezo1 Trajectory for Analysis/2018_Nov_tirfm_tdtpiezo_5sec/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
     tifFile = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/test_images/AL_12_2019-05-30-TIRFM_Diff_tdt-mNSPCs_1_dic_MMStack_Pos0.ome.tif'
@@ -146,35 +175,12 @@ if __name__ == '__main__':
     minfrm = 20
     # * END OF USER INPUTS * #
 
-    txy_pts, tracks = fl.open_tracks(filename)
-    lst, lstnan, trackOrigins = fl.gen_indiv_tracks(save_path, minfrm, tracks, txy_pts)
-    xvals, yvals = SelectFromCollection.select_tracks_plot(trackOrigins)
-
+    tP = trackPlots()
     iPP = imgPreProcess()
-    img = iPP.isDicFile(tifFile)
 
-    subplot_kw = dict(xlim=(0, 1024), ylim=(1024, 0), autoscale_on=False)
-    fig, ax = plt.subplots(subplot_kw=subplot_kw, figsize=(10,10))
+    tP.lassoPlot(filename, save_path, minfrm)
 
-    pts = ax.scatter(xvals, yvals, s=5, c='chartreuse')
-    selector = SelectFromCollection(ax, pts)
-    imgplot = plt.imshow(img)
-
-    def accept(event):
-        if event.key == "enter":
-            selector.disconnect()
-            ax.set_title("")
-            plt.close()
-
-    def plotReturn():
-        fig.canvas.mpl_connect("key_press_event", accept)
-        ax.set_title("Press enter to accept selected points.")
-
-        plt.show()
-        lassoPoints = selector.xys[selector.ind]
-        return lassoPoints
-
-    lassoPoints = plotReturn()
+    lassoPoints, trackOrigins, lstnan, img = tP.plotReturn()
 
     trackList = memBoundTracks(trackOrigins, lassoPoints)
 
