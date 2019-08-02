@@ -223,6 +223,7 @@ class plot_MSD(object):
          self.p_value,
          self.std_err) = stats.linregress(self.ensa_msds['lagt'][0:self.fit_range],
                                           self.ensa_msds['msd'][0:self.fit_range])
+        print(self.slope)
         self.line = (self.slope * self.ensa_msds['lagt'] + self.intercept)
         self.line = pd.DataFrame({'lagt': self.ensa_msds['lagt'],
                                   'Avg_eamsd': self.line.values})
@@ -231,7 +232,7 @@ class plot_MSD(object):
                 self.line['Avg_eamsd'],
                 '-r',
                 linewidth=3,
-                label="Linear Fit")
+                label='Linear Fit: y = {:.2f} x + {:.2f}'.format(self.slope, self.intercept))
         # Set the scale of the axes to 'log'
         ax.set_xscale('log')
         ax.set_yscale('log')
@@ -251,8 +252,6 @@ class plot_MSD(object):
         self.half_x_max = round((self.ensa_msds['lagt'].max() / 2) / 0.05) * 0.05
         self.x_min = 4e-2
         self.x_range = self.half_x_max - self.x_min
-        print("x-max: " + str(self.half_x_max))
-        print("x-range: "+ str(self.x_range))
         self.y_min = 5e-3
         self.y_max = round((self.y_min + self.x_range - 2.3), 2)
         ax.set(ylim=(self.y_min, self.y_max), xlim=(self.x_min, self.half_x_max))
