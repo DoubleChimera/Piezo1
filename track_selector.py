@@ -95,11 +95,10 @@ def memBoundTracks(trackOrigins, lassoPoints):
     return trackList
 
 
-def genSelectedTrackList(allTracks, selectedTrackIndices, tifFile, save_path):
+def genSelectedTrackList(allTracks, selectedTrackIndices, img, save_path):
     selectedTrackList = []
     for index in selectedTrackIndices:
         selectedTrackList.append(allTracks[index])
-    img = plt.imread(tifFile)
     plt.figure(figsize=(10,10))
     SelecTracksDir = os.path.join(save_path, 'Selected_tracks')
     if not os.path.exists(SelecTracksDir):
@@ -161,7 +160,7 @@ if __name__ == '__main__':
     selector = SelectFromCollection(ax, pts)
     imgplot = plt.imshow(img)
 
-    # implot = plt.imshow(img)
+
 
 
     def accept(event):
@@ -184,4 +183,4 @@ if __name__ == '__main__':
 
     trackList = memBoundTracks(trackOrigins, lassoPoints)
 
-    selectedTrackList = genSelectedTrackList(lstnan, trackList, tifFile, save_path)
+    selectedTrackList = genSelectedTrackList(lstnan, trackList, img, save_path)
