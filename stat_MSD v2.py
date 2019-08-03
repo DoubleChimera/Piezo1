@@ -107,7 +107,6 @@ class stat_MSD(object):
 
         results = pd.DataFrame(stat.msd_iter(self.pos.values, lagtimes),
                                columns=result_columns, index=lagtimes)
-
         results['msd'] = results[result_columns[-len(pos_columns):]].sum(1)
         if detail:
             # effective number of measurements
@@ -299,7 +298,12 @@ if __name__ == '__main__':
 
     # * #################### CURRENT DEBUGGING CODE IS BELOW ####################
 
-    # ! plots need: legends, larger labels, titles, fitting-data, error clouds
-    # ! Make a new class for plotting all the data
+    # ! Setup TAMSD and EAMSD to dump their final results to .json
+    # ! Make the fitting algorithms a separate function that can take in this .json data
+    # ! Also make this algorithm easily callable so that you can make adjustments
+    # ! For the TAMSD plot, make x-max = 1/2 * longest track length
+    # ! For the EAMSD plot, make the fitting algorithm an exponential plotted on a log-log scale
+    # ! Verify this fitting parameter against mathematica
+    # ! 
 
     # ! ####################   OLD DEBUGGING CODE IS BELOW   ####################
