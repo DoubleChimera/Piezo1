@@ -243,8 +243,8 @@ class plot_MSD(object):
          self.intercept,
          self.r_value,
          self.p_value,
-         self.std_err) = stats.linregress(self.ensa_msds['lagt'][0:self.fit_range],
-                                          self.ensa_msds['msd'][0:self.fit_range])
+         self.std_err) = stats.linregress(self.ensa_msds['lagt'][1:self.fit_range],
+                                          self.ensa_msds['msd'][1:self.fit_range])
         self.line = (self.slope * self.ensa_msds['lagt'] + self.intercept)
         self.line = pd.DataFrame({'lagt': self.ensa_msds['lagt'],
                                   'Avg_eamsd': self.line.values})
@@ -326,7 +326,7 @@ if __name__ == '__main__':
 
     # * #################### CURRENT DEBUGGING CODE IS BELOW ####################
 
-    # ! Setup TAMSD and EAMSD to dump their final results to .json
+    # // Setup TAMSD and EAMSD to dump their final results to .json
     # ! Make the fitting algorithms a separate function that can take in this .json data
     # ! Also make this algorithm easily callable so that you can make adjustments
     # ! For the TAMSD plot, make x-max = 1/2 * longest track length
