@@ -1,5 +1,3 @@
-# Calcs statistics - MSD
-
 import codecs
 import os.path
 import warnings
