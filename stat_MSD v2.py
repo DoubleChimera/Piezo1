@@ -1,6 +1,7 @@
 # Calcs statistics - MSD
 
 import codecs
+import os.path
 import warnings
 import json
 import numpy as np
@@ -11,8 +12,8 @@ import scipy.stats as stats
 from collections import OrderedDict
 
 
-class json_track_loader(object):
-    def json_to_dataframe(self, file_path):
+class json_converter(object):
+    def json_tracks_to_df(self, file_path):
         self.objLoad = codecs.open(file_path, 'r', encoding='utf-8').read()
         self.lstnan = np.array(json.loads(self.objLoad))
         self.arrNan = np.array([np.array(track) for track in self.lstnan])
@@ -28,6 +29,27 @@ class json_track_loader(object):
                                        'x': lst_x,
                                        'y': lst_y})
         return self.tracks_df
+
+    def MSD_df_to_json(self, savePath, df_MSD):
+        self.df_MSD = df_MSD
+        # Make directory if it doesn't exist already
+        outMSDdf_json = os.path.join(savePath, 'Statistics/MSDs')
+        if not os.path.exists(outMSDdf_json):
+            os.makedirs(outMSDdf_json)
+        # Determine which MSD, name .json accordingly
+        if self.df_MSD.columns[0] == 0:
+            outJsonName = os.path.join(outMSDdf_json, 'TAMSD.json')
+        elif self.df_MSD.columns[0] == '<x>':
+            outJsonName = os.path.join(outMSDdf_json, 'EAMSD.json')
+        # Output dataframe to .json in determined directory
+        self.df_MSD.to_json(outJsonName)
+
+    def MSD_json_to_df(self, jsonFilePath):
+        self.filePath = jsonFilePath
+        with open(self.filePath) as json_file:
+            jdata = json.load(json_file)
+        self.df_fromJson = pd.DataFrame(jdata)
+        return self.df_fromJson
 
 
 class stat_MSD(object):
@@ -260,21 +282,23 @@ class plot_MSD(object):
 
 
 if __name__ == '__main__':
+
     #################### * USER INPUTS BELOW * ####################
-    fileLoadPath = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp/Selected_tracks/selected_track_list.json'
+    jsonTracksLoadPath = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp/Selected_tracks/selected_track_list.json'
     savePath = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp'
     # time (in ms) between frames from experiment, typically 50ms or 100ms
     pixelWidth = .1092      # in microns
     frameTime = 50          # in milliseconds
 
     #################### * END OF USER INPUTS * ###################
+
     frameTime = 1000 / frameTime  # Converts frame time to frames-per-second
 
-    # Instantiate the json_track_loader class
-    jtl = json_track_loader()
+    # Instantiate the json_converter class
+    jc = json_converter()
 
-    # Store data into a pandas DataFrame
-    tracks = jtl.json_to_dataframe(fileLoadPath)
+    # Store tracks data into a pandas DataFrame
+    tracks = jc.json_tracks_to_df(jsonTracksLoadPath)
 
     # Instantiate the stat_MSD class
     stat = stat_MSD()
@@ -285,13 +309,23 @@ if __name__ == '__main__':
     # * Time-averaged mean squared displacement
     # Get the individual trajectories
     indiv_msds = stat.indiv_msd(tracks, pixelWidth, frameTime)
+    # Output TAMSD.json to savePath
+    jc.MSD_df_to_json(savePath, indiv_msds)
 
     # Plot TAMSD
     pMSD.plot_TAMSD(indiv_msds)
 
+    # ! TEsting ZOne 1
+
+    ack = jc.MSD_json_to_df(r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp/Statistics/MSDs/TAMSD.json')
+    print(ack)
+    # ! End Testing Zone 1
+
     # * Ensemble average mean squared displacement
     # Get the ensemble msd trajectory
     ensa_msds = stat.ensa_msd(tracks, pixelWidth, frameTime)
+    # Output EAMSD .json to savePath
+    jc.MSD_df_to_json(savePath, ensa_msds)
 
     # Plot EAMSD
     pMSD.plot_EAMSD(ensa_msds)
