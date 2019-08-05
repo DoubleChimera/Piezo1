@@ -315,12 +315,6 @@ if __name__ == '__main__':
     # Plot TAMSD
     pMSD.plot_TAMSD(indiv_msds)
 
-    # ! TEsting ZOne 1
-
-    ack = jc.MSD_json_to_df(r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp/Statistics/MSDs/TAMSD.json')
-    print(ack)
-    # ! End Testing Zone 1
-
     # * Ensemble average mean squared displacement
     # Get the ensemble msd trajectory
     ensa_msds = stat.ensa_msd(tracks, pixelWidth, frameTime)
