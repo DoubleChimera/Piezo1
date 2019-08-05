@@ -15,4 +15,9 @@ print(output.fill(np.nan))
 output[divisby3] = a[divisby3]
 
 print(output)
+<<<<<<< HEAD:Code snippets/np_array_practice.py
 print("test")
+=======
+testing
+
+>>>>>>> 2d157e3c4c58172ebe7d35858be72a2dbea9aa23:Hello world.py
