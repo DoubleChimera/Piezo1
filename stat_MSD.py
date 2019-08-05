@@ -176,8 +176,10 @@ class stat_MSD(object):
 
 class plot_MSD(object):
 
-    def plot_TAMSD(self, indiv_msds):
+    def plot_TAMSD(self, indiv_msds, ensa_msds, fit_range):
         self.indiv_msds = indiv_msds
+        self.ensa_msds = ensa_msds
+        self.fit_range = fit_range
         # get half the track lengths
         self.indiv_msds_range = (int(math.floor(self.indiv_msds.count().max() / 2)))
         self.half_indices = self.indiv_msds.index[0:self.indiv_msds_range]
@@ -200,11 +202,17 @@ class plot_MSD(object):
         # Plot the averaged track, set label for legend
         ax.plot(self.avg_half_msd.index,
                 self.avg_half_msd,
-                'r-',
+                'b-',
                 alpha=1,
                 linewidth=3,
                 label='Averaged Track')
-        # ! FIGURE OUT THE EQUATION FOR THE FIT AND ADD IT TO LEGEND
+        # Fit from EAMSD calcs
+        self.line, self.slope, self.intercept = plot_MSD.plot_MSD_bestFit(self, self.ensa_msds, self.fit_range)
+        ax.plot(self.line['lagt'],
+                self.line['Avg_EAMSD'],
+                '-r',
+                linewidth=3,
+                label='Linear Fit: y = {:.2f} x + {:.2f}'.format(self.slope, self.intercept))
         # Set the scale of the axes to 'log'
         ax.set_xscale('log')
         ax.set_yscale('log')
@@ -225,8 +233,19 @@ class plot_MSD(object):
         # Display the TAMSD plot
         plt.show()
 
-    def plot_EAMSD(self, ensa_msds):
+    def plot_MSD_bestFit(self, msds, fit_range):
+        self.fit_range = fit_range
+        self.msds_vals = msds
+        self.slope, self.intercept = np.polyfit(np.log(self.msds_vals['lagt'][self.fit_range[0]:self.fit_range[1]]),
+                          np.log(self.msds_vals['msd'][self.fit_range[0]:self.fit_range[1]]), 1)
+        y_fit = np.exp(self.slope*np.log(self.msds_vals['lagt'][self.fit_range[0]:self.fit_range[1]]) + self.intercept)
+        self.line = pd.DataFrame({'lagt': self.msds_vals['lagt'],
+                                  'Avg_EAMSD': y_fit})
+        return self.line, self.slope, self.intercept
+
+    def plot_EAMSD(self, ensa_msds, fit_range):
         self.ensa_msds = ensa_msds
+        self.fit_range = fit_range
         # Plot results as half the track lengths by modifiying plotting window
         fig, ax = plt.subplots(figsize=(10, 5))
         # Plot EAMSD of tracks
@@ -236,19 +255,11 @@ class plot_MSD(object):
                 label="Ensemble Average MSD")
         # Determine linear fit to data
         # Set number of initial points to fit
-        self.fit_range = 15
-        (self.slope,
-         self.intercept,
-         self.r_value,
-         self.p_value,
-         self.std_err) = stats.linregress(self.ensa_msds['lagt'][1:self.fit_range],
-                                          self.ensa_msds['msd'][1:self.fit_range])
-        self.line = (self.slope * self.ensa_msds['lagt'] + self.intercept)
-        self.line = pd.DataFrame({'lagt': self.ensa_msds['lagt'],
-                                  'Avg_eamsd': self.line.values})
+        # Fit from EAMSD calcs
+        self.line, self.slope, self.intercept = plot_MSD.plot_MSD_bestFit(self, self.ensa_msds, self.fit_range)
         # Plot linear fit of EAMSD data
         ax.plot(self.line['lagt'],
-                self.line['Avg_eamsd'],
+                self.line['Avg_EAMSD'],
                 '-r',
                 linewidth=3,
                 label='Linear Fit: y = {:.2f} x + {:.2f}'.format(self.slope, self.intercept))
@@ -272,7 +283,7 @@ class plot_MSD(object):
         self.half_x_max = round((self.ensa_msds['lagt'].max() / 2) / 0.05) * 0.05
         self.x_min = 4e-2
         self.x_range = self.half_x_max - self.x_min
-        self.y_min = 5e-3
+        self.y_min = 5e-4
         self.y_max = round((self.y_min + self.x_range - 2.3), 2)
         ax.set(ylim=(self.y_min, self.y_max), xlim=(self.x_min, self.half_x_max))
         # Display the EAMSD plot
@@ -287,7 +298,7 @@ if __name__ == '__main__':
     # time (in ms) between frames from experiment, typically 50ms or 100ms
     pixelWidth = .1092      # in microns
     frameTime = 50          # in milliseconds
-
+    fit_range = [1, 15]     # bounding indices for linear fit
     #################### * END OF USER INPUTS * ###################
 
     frameTime = 1000 / frameTime  # Converts frame time to frames-per-second
@@ -304,23 +315,25 @@ if __name__ == '__main__':
     # Instantiate the plot_MSD class
     pMSD = plot_MSD()
 
-    # * Time-averaged mean squared displacement
-    # Get the individual trajectories
-    indiv_msds = stat.indiv_msd(tracks, pixelWidth, frameTime)
-    # Output TAMSD.json to savePath
-    jc.MSD_df_to_json(savePath, indiv_msds)
 
-    # Plot TAMSD
-    pMSD.plot_TAMSD(indiv_msds)
-
-    # * Ensemble average mean squared displacement
+    # * Ensemble average mean squared displacement calculation
     # Get the ensemble msd trajectory
     ensa_msds = stat.ensa_msd(tracks, pixelWidth, frameTime)
     # Output EAMSD .json to savePath
     jc.MSD_df_to_json(savePath, ensa_msds)
 
+    # * Time-averaged mean squared displacement calculation
+    # Get the individual trajectories
+    indiv_msds = stat.indiv_msd(tracks, pixelWidth, frameTime)
+    # Output TAMSD.json to savePath
+    jc.MSD_df_to_json(savePath, indiv_msds)
+
+    # * TAMSD and EAMSD Plots
+    # Plot TAMSD
+    pMSD.plot_TAMSD(indiv_msds, ensa_msds, fit_range)
+
     # Plot EAMSD
-    pMSD.plot_EAMSD(ensa_msds)
+    pMSD.plot_EAMSD(ensa_msds, fit_range)
 
     # * #################### CURRENT DEBUGGING CODE IS BELOW ####################
 
@@ -331,5 +344,4 @@ if __name__ == '__main__':
     # ! For the EAMSD plot, make the fitting algorithm an exponential plotted on a log-log scale
     # ! Verify this fitting parameter against mathematica
     # ! 
-
     # ! ####################   OLD DEBUGGING CODE IS BELOW   ####################
