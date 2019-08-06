@@ -131,7 +131,7 @@ if __name__ == '__main__':
     filename = r'/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Piezo1 Trajectory for Analysis/2018_Nov_tirfm_tdtpiezo_5sec/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
     txy_pts, tracks = open_tracks(filename)
 
-    save_path = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp'
+    save_path = r'/home/vivek/Documents/Python Programs/Piezo1/temp_outputs'
     minfrm = 20
     lst, lstnan, trackOrigins = gen_indiv_tracks(save_path, minfrm, tracks, txy_pts)
 # ! ############################################################################################

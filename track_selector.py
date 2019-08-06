@@ -174,7 +174,7 @@ if __name__ == '__main__':
     # * USER INPUTS GO BELOW * #
     filename = r'/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Piezo1 Trajectory for Analysis/2018_Nov_tirfm_tdtpiezo_5sec/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
     tifFile = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/test_images/AL_12_2019-05-30-TIRFM_Diff_tdt-mNSPCs_1_dic_MMStack_Pos0.ome.tif'
-    save_path = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp'
+    save_path = r'/home/vivek/Documents/Python Programs/Piezo1/temp_outputs'
     minfrm = 20
     # * END OF USER INPUTS * #
 
