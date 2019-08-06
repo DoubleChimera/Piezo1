@@ -98,11 +98,13 @@ class stat_MSD(object):
             warnings.simplefilter("ignore", category=RuntimeWarning)
         for lt in lagtimes:
             diff = pos[lt:] - pos[:-lt]
-            yield np.concatenate((np.nanmean(diff, axis=0), np.nanmean(diff**2, axis=0)))
+            yield np.concatenate((np.nanmean(diff, axis=0),
+                                  np.nanmean(diff**2, axis=0)))
 
-    def msdNan(self, track, pixelWidth, frameTime, max_lagtime=100, pos_columns=None, detail=True):
-        """ Compute the mean displacement and mean squared displacement of one trajectory over a
-            range of time intervals.
+    def msdNan(self, track, pixelWidth, frameTime,
+               max_lagtime=100, pos_columns=None, detail=True):
+        """ Compute the mean displacement and mean squared displacement
+            of one trajectory over a range of time intervals.
         """
         self.track = track
         if pos_columns is None:
@@ -112,7 +114,8 @@ class stat_MSD(object):
 
         try:
             self.pos = self.track.set_index('frame')[pos_columns] * pixelWidth
-            self.pos = self.pos.reindex(np.arange(self.pos.index[0], 1 + self.pos.index[-1]))
+            self.pos = self.pos.reindex(np.arange(self.pos.index[0],
+                                                  1 + self.pos.index[-1]))
         except ValueError:
             if track['frame'].nunique() != len(self.track['frame']):
                 raise Exception("Cannot use msdNan, more than one trajectory "
@@ -180,7 +183,7 @@ class plot_MSD(object):
         self.msds_vals = msds
         self.msds_vals = self.msds_vals.reset_index(name='Avg_TAMSD')
         self.slope, self.intercept = np.polyfit(np.log(self.msds_vals['lagt'][self.fit_range[0]:self.fit_range[1]]),
-                          np.log(self.msds_vals['Avg_TAMSD'][self.fit_range[0]:self.fit_range[1]]), 1)
+                                                np.log(self.msds_vals['Avg_TAMSD'][self.fit_range[0]:self.fit_range[1]]), 1)
         y_fit = np.exp(self.slope*np.log(self.msds_vals['lagt'][self.fit_range[0]:self.fit_range[1]]) + self.intercept)
         self.line = pd.DataFrame({'lagt': self.msds_vals['lagt'],
                                   'Avg_TAMSD': y_fit})
@@ -240,6 +243,16 @@ class plot_MSD(object):
         ax.set_xlabel('lag times [$s$]', fontsize=15)
         # Position the axes labels
         ax.xaxis.set_label_coords(0.5, -0.07)
+        # Determine the min/max values for the x, y axes
+        # Padding value to increase axes by
+        axes_padding = 0.1
+        # Calculate min/max values for axes
+        self.x_min = (self.avg_half_msd.index[0] - (self.avg_half_msd.index[0] * axes_padding))
+        self.x_max = (self.avg_half_msd.index.max() + (self.avg_half_msd.index.max() * axes_padding))
+        self.y_min = (self.half_indiv_msds.min().min() - (self.half_indiv_msds.min().min() * axes_padding))
+        self.y_max = (self.half_indiv_msds.max().max() + (self.half_indiv_msds.max().max() * axes_padding))
+        # Set the min/max values for the x, y axes
+        ax.set(ylim=(self.y_min, self.y_max), xlim=(self.x_min, self.x_max))
         # Display the TAMSD plot
         plt.show()
 
@@ -247,7 +260,7 @@ class plot_MSD(object):
         self.fit_range = fit_range
         self.msds_vals = msds
         self.slope, self.intercept = np.polyfit(np.log(self.msds_vals['lagt'][self.fit_range[0]:self.fit_range[1]]),
-                          np.log(self.msds_vals['msd'][self.fit_range[0]:self.fit_range[1]]), 1)
+                                                np.log(self.msds_vals['msd'][self.fit_range[0]:self.fit_range[1]]), 1)
         y_fit = np.exp(self.slope*np.log(self.msds_vals['lagt'][self.fit_range[0]:self.fit_range[1]]) + self.intercept)
         self.line = pd.DataFrame({'lagt': self.msds_vals['lagt'],
                                   'Avg_EAMSD': y_fit})
@@ -289,13 +302,16 @@ class plot_MSD(object):
         ax.set_xlabel('lag time [$s$]', fontsize=15)
         # Position the axes labels
         ax.xaxis.set_label_coords(0.5, -0.07)
-        # Determine and set x-lim and y-lim of plot
-        self.half_x_max = round((self.ensa_msds['lagt'].max() / 2) / 0.05) * 0.05
-        self.x_min = 4e-2
-        self.x_range = self.half_x_max - self.x_min
-        self.y_min = 5e-4
-        self.y_max = round((self.y_min + self.x_range - 2.3), 2)
-        ax.set(ylim=(self.y_min, self.y_max), xlim=(self.x_min, self.half_x_max))
+        # Determine the min/max values for the x, y axes
+        # Padding value to increase axes by
+        axes_padding = 0.1
+        # Calculate min/max values for axes
+        self.x_min = (self.ensa_msds['lagt'].min() - (self.ensa_msds['lagt'].min() * axes_padding))
+        self.x_max = (self.ensa_msds['lagt'].max() + (self.ensa_msds['lagt'].max() * axes_padding))
+        self.y_min = (self.ensa_msds['msd'].min() - (self.ensa_msds['msd'].min() * axes_padding))
+        self.y_max = (self.ensa_msds['msd'].max() + (self.ensa_msds['msd'].max() * axes_padding))
+        # Set the min/max values for x, y axes
+        ax.set(ylim=(self.y_min, self.y_max), xlim=(self.x_min, self.x_max))
         # Display the EAMSD plot
         plt.show()
 
@@ -325,7 +341,6 @@ if __name__ == '__main__':
     # Instantiate the plot_MSD class
     pMSD = plot_MSD()
 
-
     # * Ensemble average mean squared displacement calculation
     # Get the ensemble msd trajectory
     ensa_msds = stat.ensa_msd(tracks, pixelWidth, frameTime)
@@ -351,7 +366,7 @@ if __name__ == '__main__':
     # // Make the fitting algorithms a separate function that can take in this .json data
     # // Also make this algorithm easily callable so that you can make adjustments
     # ! For the TAMSD plot, make x-max = 1/2 * longest track length
+    # ! Use plot characteristics to determine x & y min/max for plots
     # // For the EAMSD plot, make the fitting algorithm an exponential plotted on a log-log scale
     # ! Verify this fitting parameter against mathematica
-    # ! 
     # ! ####################   OLD DEBUGGING CODE IS BELOW   ####################
