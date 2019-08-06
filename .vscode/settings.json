@@ -1,0 +1,6 @@
+{
+    "python.pythonPath": "/home/vivek/anaconda3/envs/rmsd/bin/python",
+    "python.linting.pep8Enabled": true,
+    "python.linting.pep8Args": ["--max-line-length=125" ],
+    "python.linting.pylintEnabled": true
+}
