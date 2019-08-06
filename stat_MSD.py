@@ -175,6 +175,17 @@ class stat_MSD(object):
 
 
 class plot_MSD(object):
+    def plot_TAMSD_bestFit(self, msds, fit_range):
+        self.fit_range = fit_range
+        self.msds_vals = msds
+        self.msds_vals = self.msds_vals.reset_index(name='Avg_TAMSD')
+        self.slope, self.intercept = np.polyfit(np.log(self.msds_vals['lagt'][self.fit_range[0]:self.fit_range[1]]),
+                          np.log(self.msds_vals['Avg_TAMSD'][self.fit_range[0]:self.fit_range[1]]), 1)
+        y_fit = np.exp(self.slope*np.log(self.msds_vals['lagt'][self.fit_range[0]:self.fit_range[1]]) + self.intercept)
+        self.line = pd.DataFrame({'lagt': self.msds_vals['lagt'],
+                                  'Avg_TAMSD': y_fit})
+        return self.line, self.slope, self.intercept
+
 
     def plot_TAMSD(self, indiv_msds, ensa_msds, fit_range):
         self.indiv_msds = indiv_msds
@@ -206,10 +217,10 @@ class plot_MSD(object):
                 alpha=1,
                 linewidth=3,
                 label='Averaged Track')
-        # Fit from EAMSD calcs
-        self.line, self.slope, self.intercept = plot_MSD.plot_MSD_bestFit(self, self.ensa_msds, self.fit_range)
+        # Linear Fit of Averaged Track
+        self.line, self.slope, self.intercept = plot_MSD.plot_TAMSD_bestFit(self, self.avg_half_msd, self.fit_range)
         ax.plot(self.line['lagt'],
-                self.line['Avg_EAMSD'],
+                self.line['Avg_TAMSD'],
                 '-r',
                 linewidth=3,
                 label='Linear Fit: y = {:.2f} x + {:.2f}'.format(self.slope, self.intercept))
@@ -233,7 +244,7 @@ class plot_MSD(object):
         # Display the TAMSD plot
         plt.show()
 
-    def plot_MSD_bestFit(self, msds, fit_range):
+    def plot_EAMSD_bestFit(self, msds, fit_range):
         self.fit_range = fit_range
         self.msds_vals = msds
         self.slope, self.intercept = np.polyfit(np.log(self.msds_vals['lagt'][self.fit_range[0]:self.fit_range[1]]),
@@ -256,7 +267,7 @@ class plot_MSD(object):
         # Determine linear fit to data
         # Set number of initial points to fit
         # Fit from EAMSD calcs
-        self.line, self.slope, self.intercept = plot_MSD.plot_MSD_bestFit(self, self.ensa_msds, self.fit_range)
+        self.line, self.slope, self.intercept = plot_MSD.plot_EAMSD_bestFit(self, self.ensa_msds, self.fit_range)
         # Plot linear fit of EAMSD data
         ax.plot(self.line['lagt'],
                 self.line['Avg_EAMSD'],
@@ -338,10 +349,10 @@ if __name__ == '__main__':
     # * #################### CURRENT DEBUGGING CODE IS BELOW ####################
 
     # // Setup TAMSD and EAMSD to dump their final results to .json
-    # ! Make the fitting algorithms a separate function that can take in this .json data
-    # ! Also make this algorithm easily callable so that you can make adjustments
+    # // Make the fitting algorithms a separate function that can take in this .json data
+    # // Also make this algorithm easily callable so that you can make adjustments
     # ! For the TAMSD plot, make x-max = 1/2 * longest track length
-    # ! For the EAMSD plot, make the fitting algorithm an exponential plotted on a log-log scale
+    # // For the EAMSD plot, make the fitting algorithm an exponential plotted on a log-log scale
     # ! Verify this fitting parameter against mathematica
     # ! 
     # ! ####################   OLD DEBUGGING CODE IS BELOW   ####################
