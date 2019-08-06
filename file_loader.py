@@ -112,21 +112,7 @@ def gen_indiv_tracks(save_path, minfrm, tracks, txy_pts):
 
     return lst, lstnan, trackOrigins
 
-
 # ! ############################################################################################
-# # For use from home computer, comment this out at school
-# if __name__ == '__main__':
-#     filename = r'C:/Users/vivty/OneDrive/Documents/Python Programs/RMSD_2D-master/Practice data/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
-#     txy_pts, tracks = open_tracks(filename)
-
-#     save_path = 'C:/temp'
-#     minfrm = 20
-#     lst, lstnan, trackOrigins = gen_indiv_tracks(save_path, minfrm)
-# ! ############################################################################################
-
-
-# ! ############################################################################################
-# For use from school, comment this out at home
 if __name__ == '__main__':
     filename = r'/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Piezo1 Trajectory for Analysis/2018_Nov_tirfm_tdtpiezo_5sec/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
     txy_pts, tracks = open_tracks(filename)

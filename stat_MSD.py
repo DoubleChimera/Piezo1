@@ -359,14 +359,3 @@ if __name__ == '__main__':
 
     # Plot EAMSD
     pMSD.plot_EAMSD(ensa_msds, fit_range)
-
-    # * #################### CURRENT DEBUGGING CODE IS BELOW ####################
-
-    # // Setup TAMSD and EAMSD to dump their final results to .json
-    # // Make the fitting algorithms a separate function that can take in this .json data
-    # // Also make this algorithm easily callable so that you can make adjustments
-    # ! For the TAMSD plot, make x-max = 1/2 * longest track length
-    # ! Use plot characteristics to determine x & y min/max for plots
-    # // For the EAMSD plot, make the fitting algorithm an exponential plotted on a log-log scale
-    # ! Verify this fitting parameter against mathematica
-    # ! ####################   OLD DEBUGGING CODE IS BELOW   ####################
