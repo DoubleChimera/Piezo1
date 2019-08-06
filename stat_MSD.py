@@ -186,7 +186,6 @@ class plot_MSD(object):
                                   'Avg_TAMSD': y_fit})
         return self.line, self.slope, self.intercept
 
-
     def plot_TAMSD(self, indiv_msds, ensa_msds, fit_range):
         self.indiv_msds = indiv_msds
         self.ensa_msds = ensa_msds
