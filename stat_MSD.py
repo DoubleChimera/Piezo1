@@ -319,7 +319,7 @@ class plot_MSD(object):
 if __name__ == '__main__':
 
     #################### * USER INPUTS BELOW * ####################
-    jsonTracksLoadPath = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/temp/Selected_tracks/selected_track_list.json'
+    jsonTracksLoadPath = r'/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json'
     savePath = r'/home/vivek/Documents/Python Programs/Piezo1/temp_outputs'
     # time (in ms) between frames from experiment, typically 50ms or 100ms
     pixelWidth = .1092      # in microns
