@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 
+
 class json_converter(object):
     def json_tracks_to_df(self, file_path):
         self.objLoad = codecs.open(file_path, 'r', encoding='utf-8').read()
@@ -41,16 +42,17 @@ if __name__ == '__main__':
     tracks = jc.json_tracks_to_df(jsonTracksLoadPath)
 
     # ! #################### CURRENT DEBUGGING CODE IS BELOW ####################
-    pos_columns=None
+    pos_columns = None
     if pos_columns is None:
         pos_columns = ['x', 'y']
     lagtimes = [1, 2, 3]
     lag_columns = ['_lag{}'.format(l) for l in lagtimes]
+
     def genLagColumns(lag_columns, pos_columns):
         for lag in lag_columns:
             for p in pos_columns:
                 yield ''.join(map(str, (p, lag)))
-    results = list(combineLags(lag_columns, pos_columns))
+    results = list(genLagColumns(lag_columns, pos_columns))
 
     def genDisplacements(tracks, pixelWidth, pos_columns=None):
         if pos_columns is None:
