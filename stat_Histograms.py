@@ -112,10 +112,17 @@ if __name__ == '__main__':
             if lag == 0:
                 results.loc[particle][[f'x_lag{lag}',f'y_lag{lag}']] = track[pos_columns].values
             else:
-                indivDisp = pd.DataFrame(track[pos_columns].values[lag:] - track[pos_columns].values[:-lag])
+                indivDisp = pd.DataFrame(track[pos_columns].values[lag:] - track[pos_columns].values[:-lag],
+                                         columns=[[f'x_lag{lag}', f'y_lag{lag}']])
+                # ! HERE I AM TRYING TO GET THIS TO MERGE INTO THE RESULTS
+                # ! Use a loop to figure out how many rows are missing
+                # ! add np.nan values there
+                # ! combine with results
+                print(results)
+                print(indivDisp)
+                results = pd.concat([results.loc[particle], indivDisp], sort=False)
                 # results.loc[particle][[f'x_lag{lag}']] = pd.Series(indivDisp[:,0])
                 # results.loc[particle][[f'y_lag{lag}']] = pd.Series(indivDisp[:,1])
-        print(results['x_lag0'])
 
 
         # msds.append(stat.msdNan(track, pixelWidth, frameTime, max_lagtime, pos_columns))
