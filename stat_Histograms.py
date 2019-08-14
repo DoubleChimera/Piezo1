@@ -124,6 +124,7 @@ if __name__ == "__main__":
                 print(results)
                 print(indivDisp)
                 results = pd.concat([results.loc[particle], indivDisp], sort=False)
+
                 # results.loc[particle][[f'x_lag{lag}']] = pd.Series(indivDisp[:,0])
                 # results.loc[particle][[f'y_lag{lag}']] = pd.Series(indivDisp[:,1])
 
