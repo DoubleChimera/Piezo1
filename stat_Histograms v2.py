@@ -41,7 +41,7 @@ if __name__ == "__main__":
     # These tracks use pixels and frames, not microns and seconds
     tracks = jc.json_tracks_to_df(jsonTracksLoadPath)
 
-    # ! --------------------   CURRENT DEBUGGING CODE IS BELOW   -------------------- ! #
+    # ! -------------   CURRENT DEBUGGING CODE IS BELOW   ------------- ! #
 
     # class genAllDisplacements(pos_columns=None):
 
