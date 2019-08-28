@@ -35,10 +35,12 @@ class json_converter(object):
         # Determine which MSD, name .json accordingly
         if self.df_MSD.columns[0] == 0:
             outJsonName = os.path.join(outMSDdf_json, "TAMSD.json")
+            # Output dataframe to .json in determined directory
+            self.df_MSD.reset_index().to_json(outJsonName, orient="split")
         elif self.df_MSD.columns[0] == "<x>":
             outJsonName = os.path.join(outMSDdf_json, "EAMSD.json")
-        # Output dataframe to .json in determined directory
-        self.df_MSD.to_json(outJsonName)
+            # Output dataframe to .json in determined directory
+            self.df_MSD.to_json(outJsonName, orient="split")
 
     def MSD_json_to_df(self, jsonFilePath):
         self.filePath = jsonFilePath
@@ -435,6 +437,7 @@ if __name__ == "__main__":
     # Get the ensemble msd trajectory
     ensa_msds = stat.ensa_msd(tracks, pixelWidth, frameTime)
     # Output EAMSD .json to savePath
+    # print(ensa_msds)
     jc.MSD_df_to_json(savePath, ensa_msds)
 
     # * Time-averaged mean squared displacement calculation

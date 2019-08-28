@@ -7,11 +7,10 @@ import json
 
 
 class json_converter(object):
-    def json_tracks_to_df(self, file_path):
+    def json_SelectedTracks_to_DF(self, file_path):
         self.objLoad = codecs.open(file_path, "r", encoding="utf-8").read()
         self.lstnan = np.array(json.loads(self.objLoad))
         self.arrNan = np.array([np.array(track) for track in self.lstnan])
-
         lst_part, lst_frame, lst_x, lst_y = ([] for i in range(4))
         for particle, track in enumerate(self.arrNan):
             lst_part.extend([particle] * len(track))
@@ -27,16 +26,44 @@ class json_converter(object):
 if __name__ == "__main__":
 
     # * -----USER INPUTS BELOW----- * #
-    jsonTracksLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
+    # Paths to .json files to load as dataframes
+    jsonSelectedTracksLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
+    jsonTAMSDLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/TAMSD.json"
+    jsonEAMSDLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/EAMSD.json"
+    jsonAllDisplacementsLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/All_lag_displacements_microns.json"
+
+    # Path to main directory for saving outputs
     savePath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs"
-    # time (in ms) between frames from experiment, typically 50ms or 100ms
+
+    # Experimental parameters
     pixelWidth = 0.1092  # in microns
-    frameTime = 50  # in milliseconds
+    frameTime = 50  # in milliseconds, typical value is 50 or 100
+
+    # Range of data to fit to a line
     fit_range = [1, 15]  # bounding indices for tracks to fit
     # * -----END OF USER INPUTS----- * #
 
-# TODO 1.0   Load a .json of all tracks
+    # * -----START SUBROUTINE----- * #
+    # Convert frameTime to frames-per-second
+    frameTime = 1000 / frameTime
 
+    # Instantiate the json_converter class
+    jc = json_converter()
+
+    # Store tracks data into a pandas DataFrame
+    selectedTracksDF = jc.json_SelectedTracks_to_DF(jsonSelectedTracksLoadPath)
+    TAMSD_DF = pd.read_json(jsonTAMSDLoadPath, orient="split")
+    EAMSD_DF = pd.read_json(jsonEAMSDLoadPath, orient="split")
+
+    # * -----END   SUBROUTINE----- * #
+
+    # ! -----DEBUGGING CODE START----- ! #
+
+    # ! -----DEBUGGING CODE   END----- ! #
+
+
+# --------------------------------------------------------------------------------------------------
+# // TODO 1.0   Load a .json of all tracks
 # TODO 2.0   Use selection criterion to differentiate mobile and trapped tracks
 # TODO 3.0   Plot Mobile and Trapped Tracks with output
 # TODO 4.0   TAMSD of mobile tracks

@@ -22,7 +22,7 @@ def MSD_df_to_json(savePath, df_results):
             outResultsDF_json, "All_lag_displacements_microns.json"
         )
     # Output dataframe to .json in determined directory
-    df_results.to_json(outJsonName)
+    df_results.to_json(outJsonName, orient="split")
 
 
 class json_converter(object):
