@@ -55,8 +55,11 @@ class outputDisplacementJson(object):
             for p in pos_columns:
                 yield "".join(map(str, (p, lag)))
 
-    def genAllDisplacements(self, tracks, frameTime, pos_columns, savePath):
+    def genAllDisplacements(self, tracks, frameTime, pixelWidth, pos_columns, savePath):
         self.tracks = tracks
+        self.pixelWidth = pixelWidth
+        # Converts pixel data to microns via pixelWidth
+        tracks[["x", "y"]] *= pixelWidth
         self.frameTime = frameTime
         self.pos_columns = pos_columns
         self.savePath = savePath
@@ -128,7 +131,10 @@ if __name__ == "__main__":
     # Define pos_columns via function
     pos_columns = outDisp.setPosColumns()
     # Generate the DataFrame of displacements and output the file to the savePath
-    results = outDisp.genAllDisplacements(tracks, frameTime, pos_columns, savePath)
+    # These displacements are in microns per the pixelWidth calculation
+    results = outDisp.genAllDisplacements(
+        tracks, frameTime, pixelWidth, pos_columns, savePath
+    )
 
     # ! --------------------   CURRENT DEBUGGING CODE IS BELOW   -------------------- ! #
 
