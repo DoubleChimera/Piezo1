@@ -121,7 +121,10 @@ if __name__ == "__main__":
                 # ! Use a loop to figure out how many rows are missing
                 # ! add np.nan values there
                 # ! combine with results if indiDisp with the corresponding columns in results
-                print(results)
+                with pd.option_context(
+                    "display.max_rows", None, "display.max_columns", None
+                ):
+                    print(results)
                 print(indivDisp)
                 results = pd.concat([results.loc[particle], indivDisp], sort=False)
 
