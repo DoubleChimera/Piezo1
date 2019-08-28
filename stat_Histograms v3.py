@@ -18,7 +18,9 @@ def MSD_df_to_json(savePath, df_results):
     elif df_results.columns[0] == "<x>":
         outJsonName = os.path.join(outResultsDF_json, "EAMSD.json")
     elif df_results.columns[0] == "particle":
-        outJsonName = os.path.join(outResultsDF_json, "All_lag_displacements.json")
+        outJsonName = os.path.join(
+            outResultsDF_json, "All_lag_displacements_microns.json"
+        )
     # Output dataframe to .json in determined directory
     df_results.to_json(outJsonName)
 
