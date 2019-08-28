@@ -138,8 +138,10 @@ if __name__ == "__main__":
         tracks, frameTime, pixelWidth, pos_columns, savePath
     )
 
-    # Use the results dataframe for stats somehow??
-
     # ! --------------------   CURRENT DEBUGGING CODE IS BELOW   -------------------- ! #
+    # Very possible to incorporate this function in statMSD's TAMSD function
+    # and thus get rid of this file altogether....  Work for a later day, for now this works
+    # albeit quite slowly compared to everything else
+    # consider using dataframes and changing indices to autogenerate the np.nan values implicitly
 
     # ! -------   OLD DEBUGGING CODE IS BELOW   ------- ! #
