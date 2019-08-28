@@ -1,4 +1,5 @@
 # Load a .json of all tracks
+
 # Use selection criterion to differentiate mobile and trapped tracks
 # Plot Mobile and Trapped Tracks with output
 # TAMSD of mobile tracks
