@@ -138,6 +138,8 @@ if __name__ == "__main__":
         tracks, frameTime, pixelWidth, pos_columns, savePath
     )
 
+    # Use the results dataframe for stats somehow??
+
     # ! --------------------   CURRENT DEBUGGING CODE IS BELOW   -------------------- ! #
 
     # ! -------   OLD DEBUGGING CODE IS BELOW   ------- ! #
