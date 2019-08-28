@@ -2,8 +2,6 @@
 import codecs
 import json
 import os.path
-from fileinput import filename
-
 import numpy as np
 import pandas as pd
 
@@ -28,10 +26,10 @@ def open_tracks(filename):
                    [   2.   ,   23.878,  252.8  ]])
     """
 
-    obj_text = codecs.open(filename, 'r', encoding='utf-8').read()
+    obj_text = codecs.open(filename, "r", encoding="utf-8").read()
     pts = json.loads(obj_text)
-    txy_pts = np.array(pts['txy_pts'])
-    tracks = [np.array(track) for track in pts['tracks']]
+    txy_pts = np.array(pts["txy_pts"])
+    tracks = [np.array(track) for track in pts["tracks"]]
     return txy_pts, tracks
 
 
@@ -72,7 +70,7 @@ def gen_indiv_tracks(save_path, minfrm, tracks, txy_pts):
     # make list of tracks with >= min number frames
     lst = []
 
-    for i in range(0,(numTracks)):
+    for i in range(0, (numTracks)):
         track = tracks[i]
         pts = txy_pts[track, :]
         if len(pts) >= minfrm:
@@ -88,36 +86,41 @@ def gen_indiv_tracks(save_path, minfrm, tracks, txy_pts):
     lstnan = np.copy(lst)
 
     # make a new directory to save all the track files in if it doesn't already exist
-    allTracksDir = os.path.join(save_path, 'All_tracks')
+    allTracksDir = os.path.join(save_path, "All_tracks")
     if not os.path.exists(allTracksDir):
         os.makedirs(allTracksDir)
 
     # parse through the list, and extract .txt track files for each track
-    for k in range(0,len(lst)):
+    for k in range(0, len(lst)):
         df = pd.DataFrame(lst[k])
         num = k + 1
-        completeName = os.path.join(allTracksDir,'track%i.txt' % num)
-        df.to_csv(completeName, index=False, header=['Frame_Number','X-coordinate','Y-coordinate'])
+        completeName = os.path.join(allTracksDir, "track%i.txt" % num)
+        df.to_csv(
+            completeName,
+            index=False,
+            header=["Frame_Number", "X-coordinate", "Y-coordinate"],
+        )
 
-    # fill in missing frames with NaN values
-        totalnumber = (lstnan[k][-1][0] + 1)
-        missing = sorted(list(set(range(int(totalnumber))) - set(lstnan[k][:,0])))
+        # fill in missing frames with NaN values
+        totalnumber = lstnan[k][-1][0] + 1
+        missing = sorted(list(set(range(int(totalnumber))) - set(lstnan[k][:, 0])))
         for elem in missing:
-            lstnan[k] = np.insert(lstnan[k], elem, [[elem, nan, nan]], axis = 0)
+            lstnan[k] = np.insert(lstnan[k], elem, [[elem, nan, nan]], axis=0)
 
     # a dictionary of index-0 pts from each track
-    trackOrigins = {} 
+    trackOrigins = {}
     for index, track in enumerate(lstnan):
         trackOrigins[index] = track[0][1:]
 
     return lst, lstnan, trackOrigins
 
+
 # ! ############################################################################################
-if __name__ == '__main__':
-    filename = r'/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Piezo1 Trajectory for Analysis/2018_Nov_tirfm_tdtpiezo_5sec/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
+if __name__ == "__main__":
+    filename = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Piezo1 Trajectory for Analysis/2018_Nov_tirfm_tdtpiezo_5sec/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json"
     txy_pts, tracks = open_tracks(filename)
 
-    save_path = r'/home/vivek/Documents/Python Programs/Piezo1/temp_outputs'
+    save_path = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs"
     minfrm = 20
     lst, lstnan, trackOrigins = gen_indiv_tracks(save_path, minfrm, tracks, txy_pts)
 # ! ############################################################################################

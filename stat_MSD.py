@@ -1,12 +1,13 @@
 import codecs
+import json
+import math
 import os.path
 import warnings
-import json
-import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
-import math
 from collections import OrderedDict
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 
 class json_converter(object):

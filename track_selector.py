@@ -2,13 +2,15 @@ import codecs
 import json
 import os.path
 import time
+
+import cv2
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from matplotlib.path import Path
 from matplotlib.widgets import LassoSelector
-import cv2
+
 import file_loader as fl
-import matplotlib.pyplot as plt
 
 
 class SelectFromCollection(object):
@@ -46,7 +48,7 @@ class SelectFromCollection(object):
         # Ensure that we have separate colors for each object
         self.fc = collection.get_facecolors()
         if len(self.fc) == 0:
-            raise ValueError('Collection must have a facecolor')
+            raise ValueError("Collection must have a facecolor")
         elif len(self.fc) == 1:
             self.fc = np.tile(self.fc, (self.Npts, 1))
 
@@ -78,14 +80,16 @@ class SelectFromCollection(object):
 
 def memBoundTracks(trackOrigins, lassoPoints):
     trackList = []
-    trackList = [index for index, coords in trackOrigins.items() if coords in lassoPoints]
+    trackList = [
+        index for index, coords in trackOrigins.items() if coords in lassoPoints
+    ]
     timestr = time.strftime("%Y%m%d-%H:%M:%S")
-    SelecTracksDir = os.path.join(save_path, 'Selected_tracks')
+    SelecTracksDir = os.path.join(save_path, "Selected_tracks")
     if not os.path.exists(SelecTracksDir):
         os.makedirs(SelecTracksDir)
     df = pd.DataFrame(trackList)
-    completeName = os.path.join(SelecTracksDir, 'selected_tracks_indices.txt')
-    df.to_csv(completeName, index=False, header=[f'Selected Track Index -- {timestr}'])
+    completeName = os.path.join(SelecTracksDir, "selected_tracks_indices.txt")
+    df.to_csv(completeName, index=False, header=[f"Selected Track Index -- {timestr}"])
     return trackList
 
 
@@ -94,27 +98,40 @@ def genSelectedTrackList(allTracks, selectedTrackIndices, img, save_path):
     for index in selectedTrackIndices:
         selectedTrackList.append(allTracks[index])
     plt.figure(figsize=(10, 10))
-    SelecTracksDir = os.path.join(save_path, 'Selected_tracks')
+    SelecTracksDir = os.path.join(save_path, "Selected_tracks")
     if not os.path.exists(SelecTracksDir):
         os.makedirs(SelecTracksDir)
     # dump the whole tracklist as a json
     for index, track in enumerate(selectedTrackList):
-        plt.plot(track[:, 1], track[:, 2], color='chartreuse')
+        plt.plot(track[:, 1], track[:, 2], color="chartreuse")
         df = pd.DataFrame(track)
-        completeName = os.path.join(SelecTracksDir, f'Track{selectedTrackIndices[index]}.txt')
-        df.to_csv(completeName, index=False, header=['Frame_Number',
-                                                     'X-coordinate',
-                                                     'Y-coordinate'])
+        completeName = os.path.join(
+            SelecTracksDir, f"Track{selectedTrackIndices[index]}.txt"
+        )
+        df.to_csv(
+            completeName,
+            index=False,
+            header=["Frame_Number", "X-coordinate", "Y-coordinate"],
+        )
     plt.imshow(img)
-    plt.suptitle("Close plot to continue...",
-                 x=0.40, y=.95, horizontalalignment='left',
-                 verticalalignment='top', fontsize=15)
+    plt.suptitle(
+        "Close plot to continue...",
+        x=0.40,
+        y=0.95,
+        horizontalalignment="left",
+        verticalalignment="top",
+        fontsize=15,
+    )
     plt.show()
     # Outputs a .json file with all the selected tracks to a specified directory
-    outSelTracksDir = os.path.join(SelecTracksDir, 'selected_track_list.json')
-    json.dump(selectedTrackList, cls=NumpyEncoder,
-              fp=codecs.open(outSelTracksDir, 'w', encoding='utf-8'),
-              separators=(',', ':'), sort_keys=True)
+    outSelTracksDir = os.path.join(SelecTracksDir, "selected_track_list.json")
+    json.dump(
+        selectedTrackList,
+        cls=NumpyEncoder,
+        fp=codecs.open(outSelTracksDir, "w", encoding="utf-8"),
+        separators=(",", ":"),
+        sort_keys=True,
+    )
     return selectedTrackList
 
 
@@ -141,18 +158,19 @@ class imgPreProcess(object):
 class trackPlots(object):
     def lassoPlot(self, filename, save_path, minfrm):
         self.txy_pts, self.tracks = fl.open_tracks(filename)
-        self.lst, self.lstnan, self.trackOrigins = fl.gen_indiv_tracks(save_path,
-                                                                       minfrm,
-                                                                       self.tracks,
-                                                                       self.txy_pts)
-        self.xvals, self.yvals = SelectFromCollection.select_tracks_plot(self.trackOrigins)
+        self.lst, self.lstnan, self.trackOrigins = fl.gen_indiv_tracks(
+            save_path, minfrm, self.tracks, self.txy_pts
+        )
+        self.xvals, self.yvals = SelectFromCollection.select_tracks_plot(
+            self.trackOrigins
+        )
 
         self.img = iPP.isDicFile(tifFile)
 
         self.subplot_kw = dict(xlim=(0, 1024), ylim=(1024, 0), autoscale_on=False)
         self.fig, self.ax = plt.subplots(subplot_kw=self.subplot_kw, figsize=(10, 10))
 
-        self.pts = self.ax.scatter(self.xvals, self.yvals, s=5, c='chartreuse')
+        self.pts = self.ax.scatter(self.xvals, self.yvals, s=5, c="chartreuse")
         self.selector = SelectFromCollection(self.ax, self.pts)
         self.imgplot = plt.imshow(self.img)
 
@@ -170,11 +188,11 @@ class trackPlots(object):
             plt.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # * USER INPUTS GO BELOW * #
-    filename = r'/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Piezo1 Trajectory for Analysis/2018_Nov_tirfm_tdtpiezo_5sec/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json'
-    tifFile = r'/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/test_images/AL_12_2019-05-30-TIRFM_Diff_tdt-mNSPCs_1_dic_MMStack_Pos0.ome.tif'
-    save_path = r'/home/vivek/Documents/Python Programs/Piezo1/temp_outputs'
+    filename = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Piezo1 Trajectory for Analysis/2018_Nov_tirfm_tdtpiezo_5sec/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json"
+    tifFile = r"/home/vivek/Python_Projects/Piezo1_MathToPython_Atom/test_images/AL_12_2019-05-30-TIRFM_Diff_tdt-mNSPCs_1_dic_MMStack_Pos0.ome.tif"
+    save_path = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs"
     minfrm = 20
     # * END OF USER INPUTS * #
 

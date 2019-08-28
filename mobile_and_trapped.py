@@ -1,9 +1,10 @@
 import codecs
+import json
+
+import numpy as np
 
 # import os.path
 import pandas as pd
-import numpy as np
-import json
 
 
 class json_converter(object):

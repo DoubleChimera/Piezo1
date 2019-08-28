@@ -1,6 +1,7 @@
+import codecs
 import json
 import os.path
-import codecs
+
 import numpy as np
 import pandas as pd
 
