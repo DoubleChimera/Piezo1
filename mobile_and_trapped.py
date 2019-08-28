@@ -54,6 +54,7 @@ if __name__ == "__main__":
     selectedTracksDF = jc.json_SelectedTracks_to_DF(jsonSelectedTracksLoadPath)
     TAMSD_DF = pd.read_json(jsonTAMSDLoadPath, orient="split")
     EAMSD_DF = pd.read_json(jsonEAMSDLoadPath, orient="split")
+    AllDisplacements_DF = pd.read_json(jsonAllDisplacementsLoadPath, orient="split")
 
     # * -----END   SUBROUTINE----- * #
 
