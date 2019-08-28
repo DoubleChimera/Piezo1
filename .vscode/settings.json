@@ -1,8 +1,10 @@
 {
-    "python.pythonPath": "C:\\Users\\vivty\\Anaconda3\\envs\\rmsd\\python.exe",
+    "python.pythonPath": "/home/vivek/anaconda3/envs/rmsd/bin/python",
     "python.linting.pep8Enabled": false,
     "python.linting.pep8Args": ["--max-line-length=125" ],
     "python.linting.pylintEnabled": false,
     "python.linting.flake8Enabled": true,
+    "python.linting.flake8Args": ["--max-line-length=125",
+                                  "--ignore:E501,E203,W503" ],
     "python.linting.enabled": true
 }
