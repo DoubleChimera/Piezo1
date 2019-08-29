@@ -25,6 +25,9 @@ class json_converter(object):
 
 
 def mobile_trapped_tracks(tracksDF):
+    # Use some criteria to define mobile vs trapped tracks
+    # Sort the two groups and output as .json
+    # Plot the resulting data with best fit lines
     return None
 
 
@@ -55,8 +58,8 @@ if __name__ == "__main__":
     # Instantiate the json_converter class
     jc = json_converter()
 
-    # Store tracks data into a pandas DataFrame
-    selectedTracksDF = jc.json_SelectedTracks_to_DF(jsonSelectedTracksLoadPath)
+    # Load tracks data into a pandas DataFrame
+    selectedTracks_DF = jc.json_SelectedTracks_to_DF(jsonSelectedTracksLoadPath)
     TAMSD_DF = pd.read_json(jsonTAMSDLoadPath, orient="split")
     EAMSD_DF = pd.read_json(jsonEAMSDLoadPath, orient="split")
     AllDisplacements_DF = pd.read_json(jsonAllDisplacementsLoadPath, orient="split")
@@ -64,6 +67,8 @@ if __name__ == "__main__":
     # * -----END   SUBROUTINE----- * #
 
     # ! -----DEBUGGING CODE START----- ! #
+
+    print(selectedTracks_DF)
 
     # ! -----DEBUGGING CODE   END----- ! #
 
