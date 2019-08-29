@@ -24,6 +24,10 @@ class json_converter(object):
         return self.tracks_df
 
 
+def mobile_trapped_tracks(tracksDF):
+    return None
+
+
 if __name__ == "__main__":
 
     # * -----USER INPUTS BELOW----- * #
