@@ -416,7 +416,7 @@ if __name__ == "__main__":
     # time (in ms) between frames from experiment, typically 50ms or 100ms
     pixelWidth = 0.1092  # in microns
     frameTime = 100  # in milliseconds
-    fit_range = [1, 15]  # bounding indices for linear fit
+    fit_range = [1, 25]  # bounding indices for linear fit
     # * -----END OF USER INPUTS----- * #
 
     frameTime = 1000 / frameTime  # Converts frame time to frames-per-second
