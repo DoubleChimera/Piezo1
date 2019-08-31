@@ -36,8 +36,12 @@ if __name__ == "__main__":
     # * -----USER INPUTS BELOW----- * #
     # Paths to .json files to load as dataframes
     jsonSelectedTracksLoadPath = r"/home/vivek/Documents/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
-    jsonTAMSDLoadPath = r"/home/vivek/Documents/Piezo1/temp_outputs/Statistics/MSDs/TAMSD.json"
-    jsonEAMSDLoadPath = r"/home/vivek/Documents/Piezo1/temp_outputs/Statistics/MSDs/EAMSD.json"
+    jsonTAMSDLoadPath = (
+        r"/home/vivek/Documents/Piezo1/temp_outputs/Statistics/MSDs/TAMSD.json"
+    )
+    jsonEAMSDLoadPath = (
+        r"/home/vivek/Documents/Piezo1/temp_outputs/Statistics/MSDs/EAMSD.json"
+    )
     jsonAllDisplacementsLoadPath = r"/home/vivek/Documents/Piezo1/temp_outputs/Statistics/MSDs/All_lag_displacements_microns.json"
 
     # Path to main directory for saving outputs
