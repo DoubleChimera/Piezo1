@@ -117,10 +117,10 @@ def gen_indiv_tracks(save_path, minfrm, tracks, txy_pts):
 
 # ! ############################################################################################
 if __name__ == "__main__":
-    filename = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Piezo1 Trajectory for Analysis/2018_Nov_tirfm_tdtpiezo_5sec/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_3_MMStack_Pos0.ome.json"
+    filename = r"/home/vivek/Documents/Piezo1/Piezo1/Practice data/AL_12_2019-05-30-TIRFM_Diff_tdt-mNSPCs_1_max5px_gap0.json"
     txy_pts, tracks = open_tracks(filename)
 
-    save_path = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs"
+    save_path = r"/home/vivek/Documents/Piezo1/temp_outputs/"
     minfrm = 20
     lst, lstnan, trackOrigins = gen_indiv_tracks(save_path, minfrm, tracks, txy_pts)
 # ! ############################################################################################

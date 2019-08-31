@@ -112,12 +112,10 @@ class outputDisplacementJson(object):
 if __name__ == "__main__":
 
     # * --------------------   USER INPUTS BELOW   -------------------- * #
-    savePath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs"
-    jsonTracksLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
-    loadPath = (
-        r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs"
-    )
-    frameTime = 50  # in milliseconds
+    savePath = r"/home/vivek/Documents/Piezo1/temp_outputs"
+    jsonTracksLoadPath = r"/home/vivek/Documents/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
+    loadPath = r"/home/vivek/Documents/Piezo1/temp_outputs/Statistics/MSDs"
+    frameTime = 100  # in milliseconds
     pixelWidth = 0.1092  # in microns
     # * --------------------   END OF USER INPUTS   -------------------- * #
 

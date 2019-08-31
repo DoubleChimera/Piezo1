@@ -412,11 +412,11 @@ class plot_MSD(object):
 if __name__ == "__main__":
 
     # * -----USER INPUTS BELOW----- * #
-    jsonTracksLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
-    savePath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs"
+    jsonTracksLoadPath = r"/home/vivek/Documents/Piezo1/Piezo1/Practice data/AL_12_2019-05-30-TIRFM_Diff_tdt-mNSPCs_1_max5px_gap0.json"
+    savePath = r"/home/vivek/Documents/Piezo1/temp_outputs"
     # time (in ms) between frames from experiment, typically 50ms or 100ms
     pixelWidth = 0.1092  # in microns
-    frameTime = 50  # in milliseconds
+    frameTime = 100  # in milliseconds
     fit_range = [1, 15]  # bounding indices for linear fit
     # * -----END OF USER INPUTS----- * #
 

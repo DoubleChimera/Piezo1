@@ -35,17 +35,17 @@ if __name__ == "__main__":
 
     # * -----USER INPUTS BELOW----- * #
     # Paths to .json files to load as dataframes
-    jsonSelectedTracksLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
-    jsonTAMSDLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/TAMSD.json"
-    jsonEAMSDLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/EAMSD.json"
-    jsonAllDisplacementsLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/All_lag_displacements_microns.json"
+    jsonSelectedTracksLoadPath = r"/home/vivek/Documents/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
+    jsonTAMSDLoadPath = r"/home/vivek/Documents/Piezo1/temp_outputs/Statistics/MSDs/TAMSD.json"
+    jsonEAMSDLoadPath = r"/home/vivek/Documents/Piezo1/temp_outputs/Statistics/MSDs/EAMSD.json"
+    jsonAllDisplacementsLoadPath = r"/home/vivek/Documents/Piezo1/temp_outputs/Statistics/MSDs/All_lag_displacements_microns.json"
 
     # Path to main directory for saving outputs
-    savePath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs"
+    savePath = r"/home/vivek/Documents/Piezo1/temp_outputs"
 
     # Experimental parameters
     pixelWidth = 0.1092  # in microns
-    frameTime = 50  # in milliseconds, typical value is 50 or 100
+    frameTime = 100  # in milliseconds, typical value is 50 or 100
 
     # Range of data to fit to a line
     fit_range = [1, 15]  # bounding indices for tracks to fit
