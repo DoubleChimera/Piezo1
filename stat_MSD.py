@@ -236,9 +236,8 @@ class plot_MSD(object):
         self.line = pd.DataFrame({"lagt": self.msds_vals["lagt"], "Avg_TAMSD": y_fit})
         return self.line, self.slope, self.intercept
 
-    def plot_TAMSD(self, indiv_msds, ensa_msds, fit_range):
+    def plot_TAMSD(self, indiv_msds, fit_range):
         self.indiv_msds = indiv_msds
-        self.ensa_msds = ensa_msds
         self.fit_range = fit_range
         # get half the track lengths
         self.indiv_msds_range = int(math.floor(self.indiv_msds.count().max() / 2))
@@ -259,16 +258,16 @@ class plot_MSD(object):
         fig, ax = plt.subplots(figsize=(10, 5))
         # Plot individual tracks, set label for legend
         ax.plot(
-            self.half_indiv_msds.index,
-            self.half_indiv_msds,
+            self.half_indiv_msds.index.values,
+            self.half_indiv_msds.values,
             "k-",
             alpha=0.2,
             label="Individual Tracks",
         )
         # Plot the averaged track, set label for legend
         ax.plot(
-            self.avg_half_msd.index,
-            self.avg_half_msd,
+            self.avg_half_msd.index.values,
+            self.avg_half_msd.values,
             "b-",
             alpha=1,
             linewidth=3,
@@ -412,7 +411,7 @@ class plot_MSD(object):
 if __name__ == "__main__":
 
     # * -----USER INPUTS BELOW----- * #
-    jsonTracksLoadPath = r"/home/vivek/Documents/Piezo1/Piezo1/Practice data/AL_12_2019-05-30-TIRFM_Diff_tdt-mNSPCs_1_max5px_gap0.json"
+    jsonTracksLoadPath = r"/home/vivek/Documents/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
     savePath = r"/home/vivek/Documents/Piezo1/temp_outputs"
     # time (in ms) between frames from experiment, typically 50ms or 100ms
     pixelWidth = 0.1092  # in microns
@@ -449,7 +448,7 @@ if __name__ == "__main__":
 
     # * TAMSD and EAMSD Plots
     # Plot TAMSD
-    pMSD.plot_TAMSD(indiv_msds, ensa_msds, fit_range)
+    pMSD.plot_TAMSD(indiv_msds, fit_range)
 
     # Plot EAMSD
     pMSD.plot_EAMSD(ensa_msds, fit_range)
