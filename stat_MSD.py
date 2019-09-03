@@ -29,6 +29,7 @@ class json_converter(object):
 
     def MSD_df_to_json(self, savePath, df_MSD):
         self.df_MSD = df_MSD
+        print(self.df_MSD.columns[0])
         # Make directory if it doesn't exist already
         outMSDdf_json = os.path.join(savePath, "Statistics/MSDs")
         if not os.path.exists(outMSDdf_json):
@@ -40,6 +41,10 @@ class json_converter(object):
             self.df_MSD.reset_index().to_json(outJsonName, orient="split")
         elif self.df_MSD.columns[0] == "<x>":
             outJsonName = os.path.join(outMSDdf_json, "EAMSD.json")
+            # Output dataframe to .json in determined directory
+            self.df_MSD.to_json(outJsonName, orient="split")
+        elif self.df_MSD.columns[0] == "frame":
+            outJsonName = os.path.join(outMSDdf_json, "All_Lagtimes.json")
             # Output dataframe to .json in determined directory
             self.df_MSD.to_json(outJsonName, orient="split")
 
@@ -101,14 +106,25 @@ class stat_MSD(object):
             6 * (N - t) ** 2 * t / (2 * N - t + 4 * N * t ** 2 - 5 * t ** 3),
         )
 
-    def msd_iter(self, pos, lagtimes):
+    def msd_iter(self, pos, lagtimes, result_columns):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
+        allLags_DF = pd.DataFrame()
+        allLags_List = []
         for lt in lagtimes:
             diff = pos[lt:] - pos[:-lt]
-            yield np.concatenate(
-                (np.nanmean(diff, axis=0), np.nanmean(diff ** 2, axis=0))
-            )
+            diff_DF = pd.DataFrame({f"x_lag{lt}": diff[:, 0], f"y_lag{lt}": diff[:, 1]})
+            allLags_DF = pd.concat([allLags_DF, diff_DF], axis=1)
+            diff_List = allLags_DF.loc[:, [f"x_lag{lt}", f"y_lag{lt}"]]
+            diffMean_List = np.nanmean(diff_List, axis=0)
+            diffMeanSquared_List = np.nanmean(diff_List ** 2, axis=0)
+            diffConcat_List = np.concatenate((diffMean_List, diffMeanSquared_List))
+            if len(allLags_List) == 0:
+                allLags_List = diffConcat_List
+            else:
+                allLags_List = np.vstack((allLags_List, diffConcat_List))
+        results = pd.DataFrame(allLags_List, columns=result_columns, index=lagtimes)
+        return results, allLags_DF
 
     def msdNan(
         self,
@@ -118,6 +134,7 @@ class stat_MSD(object):
         max_lagtime=100,
         pos_columns=None,
         detail=True,
+        outputAllLags=False,
     ):
         """ Compute the mean displacement and mean squared displacement
             of one trajectory over a range of time intervals.
@@ -147,11 +164,8 @@ class stat_MSD(object):
 
         lagtimes = np.arange(1, max_lagtime + 1)
 
-        results = pd.DataFrame(
-            stat.msd_iter(self.pos.values, lagtimes),
-            columns=result_columns,
-            index=lagtimes,
-        )
+        results, allLags_DF = stat.msd_iter(self.pos.values, lagtimes, result_columns)
+
         results["msd"] = results[result_columns[-len(pos_columns) :]].sum(1)
         if detail:
             # effective number of measurements
@@ -161,7 +175,18 @@ class stat_MSD(object):
             )
         results["lagt"] = results.index.values / float(frameTime)
         results.index.name = "lagt"
-        return results
+        if outputAllLags:
+            return results, allLags_DF
+        else:
+            del allLags_DF
+            return results
+
+    def genLagColumns(self, lag_columns, pos_columns):
+        self.lag_columns = lag_columns
+        self.pos_columns = pos_columns
+        for lag in self.lag_columns:
+            for p in self.pos_columns:
+                yield "".join(map(str, (p, lag)))
 
     def indiv_msd(
         self,
@@ -174,20 +199,53 @@ class stat_MSD(object):
     ):
         self.ids = []
         self.msds = []
+        self.frameTime = frameTime
+        self.pos_columns = pos_columns
         self.tracks = tracks
+        allLagsOutput_DF = tracks
+
+        if self.pos_columns is None:
+            self.pos_columns = ["x", "y"]
+
+        # Determines max track length and gens maxLagtimes List
+        # Also gens all Lag Times dataframe
+        self.maxLagTime = list(range(self.tracks.groupby("particle").count().max()[0]))
+        # Inserts lagtimes into Dataframe
+        allLagsOutput_DF.insert(2, "lagt", (self.tracks["frame"] * self.frameTime))
+        self.lag_columns = ["_lag{}".format(l) for l in self.maxLagTime]
+        self.lag_results = list(stat.genLagColumns(self.lag_columns, self.pos_columns))
+        allLagsOutput_DF = allLagsOutput_DF.reindex(
+            columns=allLagsOutput_DF.columns.tolist() + self.lag_results
+        )
+        allLagsOutput_DF.set_index("particle", inplace=True)
         for particle, track in self.tracks.groupby("particle"):
-            self.msds.append(
-                stat.msdNan(
-                    track, pixelWidth, frameTime, max_lagtime, pos_columns, detail=True
-                )
+            results, allLags_DF = stat.msdNan(
+                track,
+                pixelWidth,
+                frameTime,
+                max_lagtime,
+                pos_columns,
+                detail=True,
+                outputAllLags=True,
             )
+            allLagsOutput_DF.loc[particle, [f"x_lag0", f"y_lag0"]] = track[
+                self.pos_columns
+            ].values
+            lagNames = list(allLags_DF.columns)
+            allLags_DF = allLags_DF.append(pd.Series(), ignore_index=True)
+            allLagsOutput_DF.loc[particle, lagNames] = allLags_DF[lagNames].values
+            allLagsOutput_DF.x *= pixelWidth
+            allLagsOutput_DF.y *= pixelWidth
+            allLagsOutput_DF.x_lag0 *= pixelWidth
+            allLagsOutput_DF.y_lag0 *= pixelWidth
+            self.msds.append(results)
             self.ids.append(particle)
         results = stat.pandas_concat(self.msds, keys=self.ids)
         results = results.swaplevel(0, 1)[statistic].unstack()
         lagt = results.index.values.astype("float64") / float(frameTime)
         results.set_index(lagt, inplace=True)
         results.index.name = "lagt"
-        return results
+        return results, allLagsOutput_DF
 
     def ensa_msd(
         self,
@@ -203,6 +261,7 @@ class stat_MSD(object):
         ids = []
         msds = []
         self.tracks = tracks
+
         for particle, track in self.tracks.reset_index(drop=True).groupby("particle"):
             msds.append(
                 stat.msdNan(track, pixelWidth, frameTime, max_lagtime, pos_columns)
@@ -419,7 +478,7 @@ if __name__ == "__main__":
     fit_range = [1, 25]  # bounding indices for linear fit
     # * -----END OF USER INPUTS----- * #
 
-    frameTime = 1000 / frameTime  # Converts frame time to frames-per-second
+    frameTime = frameTime / 1000  # Converts frame time to frames-per-second
 
     # Instantiate the json_converter class
     jc = json_converter()
@@ -437,14 +496,14 @@ if __name__ == "__main__":
     # Get the ensemble msd trajectory
     ensa_msds = stat.ensa_msd(tracks, pixelWidth, frameTime)
     # Output EAMSD .json to savePath
-    # print(ensa_msds)
     jc.MSD_df_to_json(savePath, ensa_msds)
 
     # * Time-averaged mean squared displacement calculation
     # Get the individual trajectories
-    indiv_msds = stat.indiv_msd(tracks, pixelWidth, frameTime)
+    indiv_msds, allLagTimes = stat.indiv_msd(tracks, pixelWidth, frameTime)
     # Output TAMSD.json to savePath
     jc.MSD_df_to_json(savePath, indiv_msds)
+    jc.MSD_df_to_json(savePath, allLagTimes)
 
     # * TAMSD and EAMSD Plots
     # Plot TAMSD

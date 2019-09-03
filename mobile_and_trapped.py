@@ -24,11 +24,17 @@ class json_converter(object):
         return self.tracks_df
 
 
-def mobile_trapped_tracks(tracksDF):
-    # Use some criteria to define mobile vs trapped tracks
-    # Sort the two groups and output as .json
-    # Plot the resulting data with best fit lines
-    return None
+def mobile_trapped_tracks(tracksDF, locErr):
+    mobileTracksList = []
+    trappedTracksList = []
+
+    for particle, displacement in enumerate(tracksDF.loc[1.0]):
+        if displacement < locErr:
+            trappedTracksList.append(particle)
+        else:
+            mobileTracksList.append(particle)
+
+    return mobileTracksList, trappedTracksList
 
 
 if __name__ == "__main__":
@@ -42,7 +48,8 @@ if __name__ == "__main__":
     jsonEAMSDLoadPath = (
         r"/home/vivek/Documents/Piezo1/temp_outputs/Statistics/MSDs/EAMSD.json"
     )
-    jsonAllDisplacementsLoadPath = r"/home/vivek/Documents/Piezo1/temp_outputs/Statistics/MSDs/All_lag_displacements_microns.json"
+    # TODO Disabled for now
+    # jsonAllDisplacementsLoadPath = r"/home/vivek/Documents/Piezo1/temp_outputs/Statistics/MSDs/All_lag_displacements_microns.json"
 
     # Path to main directory for saving outputs
     savePath = r"/home/vivek/Documents/Piezo1/temp_outputs"
@@ -50,6 +57,9 @@ if __name__ == "__main__":
     # Experimental parameters
     pixelWidth = 0.1092  # in microns
     frameTime = 100  # in milliseconds, typical value is 50 or 100
+
+    # Local Error (determines mobile vs. trapped tracks) in um^2
+    localError = 0.018
 
     # Range of data to fit to a line
     fit_range = [1, 15]  # bounding indices for tracks to fit
@@ -66,21 +76,26 @@ if __name__ == "__main__":
     selectedTracks_DF = jc.json_SelectedTracks_to_DF(jsonSelectedTracksLoadPath)
     TAMSD_DF = pd.read_json(jsonTAMSDLoadPath, orient="split")
     EAMSD_DF = pd.read_json(jsonEAMSDLoadPath, orient="split")
-    AllDisplacements_DF = pd.read_json(jsonAllDisplacementsLoadPath, orient="split")
+    # TODO Disabled for now
+    # AllDisplacements_DF = pd.read_json(jsonAllDisplacementsLoadPath, orient="split")
 
+    # Setup the index for TAMSD
+    TAMSD_DF.set_index("lagt", inplace=True)
+    mobileTracksList, trappedTracksList = mobile_trapped_tracks(TAMSD_DF, localError)
     # * -----END   SUBROUTINE----- * #
 
     # ! -----DEBUGGING CODE START----- ! #
 
-    print(selectedTracks_DF)
+    def mobile_trapped_plots(mobileTracks, trappedTracks, binWidth):
+        pass
 
     # ! -----DEBUGGING CODE   END----- ! #
 
 
 # --------------------------------------------------------------------------------------------------
 # // TODO 1.0   Load a .json of all tracks
-# TODO 2.0   Use selection criterion to differentiate mobile and trapped tracks
-# TODO 3.0   Plot Mobile and Trapped Tracks with output
+# // TODO 2.0   Use selection criterion to differentiate mobile and trapped tracks
+# TODO 3.0   Plot Mobile and Trapped Tracks with output to file option
 # TODO 4.0   TAMSD of mobile tracks
 # TODO 4.1   --Power Law fit
 # TODO 4.2   --Slope Fit

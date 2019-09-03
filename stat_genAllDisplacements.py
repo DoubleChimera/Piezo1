@@ -83,7 +83,13 @@ class outputDisplacementJson(object):
 
         for particle, track in self.tracks.reset_index(drop=True).groupby("particle"):
             self.trackLength = int(len(track["frame"]))
+            print(
+                str(particle)
+                + " / "
+                + str(len(self.tracks.reset_index(drop=True).groupby("particle")))
+            )
             for lag in range(self.trackLength):
+                print(str(lag) + " / " + str(self.trackLength))
                 if lag == 0:
                     self.results.loc[particle, [f"x_lag{lag}", f"y_lag{lag}"]] = track[
                         self.pos_columns
@@ -142,5 +148,8 @@ if __name__ == "__main__":
     # and thus get rid of this file altogether....  Work for a later day, for now this works
     # albeit quite slowly compared to everything else
     # consider using dataframes and changing indices to autogenerate the np.nan values implicitly
-
+    with pd.option_context(
+        "display.max_rows", None, "display.max_columns", None
+    ):  # more options can be specified also
+        print(results)
     # ! -------   OLD DEBUGGING CODE IS BELOW   ------- ! #
