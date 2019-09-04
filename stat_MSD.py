@@ -112,6 +112,8 @@ class stat_MSD(object):
         allLags_DF = pd.DataFrame()
         allLags_List = []
         for lt in lagtimes:
+            # ! Insert an if statement for deciding whether we will have the all tracks output or not
+            # ! Toggle a boolean here....
             diff = pos[lt:] - pos[:-lt]
             diff_DF = pd.DataFrame({f"x_lag{lt}": diff[:, 0], f"y_lag{lt}": diff[:, 1]})
             allLags_DF = pd.concat([allLags_DF, diff_DF], axis=1)
