@@ -190,9 +190,9 @@ class trackPlots(object):
 
 if __name__ == "__main__":
     # * USER INPUTS GO BELOW * #
-    filename = r"/home/vivek/Documents/Piezo1/Piezo1/Practice data/AL_12_2019-05-30-TIRFM_Diff_tdt-mNSPCs_1_max5px_gap0.json"
-    tifFile = r"/home/vivek/Documents/Piezo1/Piezo1/Practice data/AL_12_2019-05-30-TIRFM_Diff_tdt-mNSPCs_1_dic_MMStack_Pos0.ome.tif"
-    save_path = r"/home/vivek/Documents/Piezo1/temp_outputs"
+    filename = r"/home/vivek/Documents/Python Programs/Piezo1/Piezo1/Practice data/AL_12_2019-05-30-TIRFM_Diff_tdt-mNSPCs_1_max5px_gap0.json"
+    tifFile = r"/home/vivek/Documents/Python Programs/Piezo1/Piezo1/Practice data/AL_12_2019-05-30-TIRFM_Diff_tdt-mNSPCs_1_dic_MMStack_Pos0.ome.tif"
+    save_path = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs"
     minfrm = 50
     # * END OF USER INPUTS * #
 
