@@ -166,6 +166,7 @@ class stat_MSD(object):
 
         lagtimes = np.arange(1, max_lagtime + 1)
 
+        # ! if statement changing output here
         results, allLags_DF = stat.msd_iter(self.pos.values, lagtimes, result_columns)
 
         results["msd"] = results[result_columns[-len(pos_columns) :]].sum(1)
@@ -474,10 +475,18 @@ if __name__ == "__main__":
     # * -----USER INPUTS BELOW----- * #
     jsonTracksLoadPath = r"/home/vivek/Documents/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
     savePath = r"/home/vivek/Documents/Piezo1/temp_outputs"
-    # time (in ms) between frames from experiment, typically 50ms or 100ms
-    pixelWidth = 0.1092  # in microns
-    frameTime = 100  # in milliseconds
-    fit_range = [1, 25]  # bounding indices for linear fit
+
+    # in micros
+    pixelWidth = 0.1092
+
+    # milliseconds between frames from experiment, typically 50ms or 100ms
+    frameTime = 100
+
+    # Generates all the lagtimes for each track *VERY TIME INTENSIVE*
+    genAllLagsOutput = False
+
+    # bounding indices for linear fit
+    fit_range = [1, 25]
     # * -----END OF USER INPUTS----- * #
 
     frameTime = frameTime / 1000  # Converts frame time to frames-per-second
