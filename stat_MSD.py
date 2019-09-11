@@ -124,7 +124,10 @@ class stat_MSD(object):
                 allLags_List = diffConcat_List
             else:
                 allLags_List = np.vstack((allLags_List, diffConcat_List))
+            print(allLags_List)
+            print("--->>><<<---")
         results = pd.DataFrame(allLags_List, columns=result_columns, index=lagtimes)
+        print(results)
         return results, allLags_DF
 
     def msdNan(
@@ -513,6 +516,8 @@ if __name__ == "__main__":
     indiv_msds, allLagTimes = stat.indiv_msd(tracks, pixelWidth, frameTime)
     # Output TAMSD.json to savePath
     jc.MSD_df_to_json(savePath, indiv_msds)
+
+    # ! Check whether allLagTimes is empty, if so don't output
     jc.MSD_df_to_json(savePath, allLagTimes)
 
     # * TAMSD and EAMSD Plots
