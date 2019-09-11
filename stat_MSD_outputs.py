@@ -516,7 +516,7 @@ if __name__ == "__main__":
     fit_range = [1, 15]  # bounding indices for linear fit
 
     # Boolean to toggle calculating and outputting all displacements for all particles at all lag times
-    # ! Very time intensive, leave as FALSE for most cases
+    # ! Warning -- Very time intensive
     # ! Can take upwards of an hour with enough points to aggregate
     generate_All_Lag_Outputs = False
 
