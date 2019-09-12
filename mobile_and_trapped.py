@@ -387,7 +387,7 @@ def plot_EAMSD_bestFit(msds, fit_range):
     # ! INCLUDES ALL POINTS
     # ! REVISIT HOW YOU DID THE ERROR CLOUD FOR EAMSD< IT IS LIKELY WRONG
     # ! Step 1: recalc ensemble MSD for mobile tracks only
-    # ! STEP !: MAY NO HAVE TO RECALC IF YOU HAVE THE AGGREGATED OUTPUT !!! WOO :D:D:D:D
+    # ! STEP 1: MAY NO HAVE TO RECALC IF YOU HAVE THE AGGREGATED OUTPUT !!! WOO :D:D:D:D
     # ! Step 2: Output that as a .json file
     # ! Step 3: Then plot the corresponding data with a fit and error cloud
 
