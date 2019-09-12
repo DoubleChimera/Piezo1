@@ -323,18 +323,19 @@ class plot_MSD(object):
         self.line = pd.DataFrame({"lagt": self.msds_vals["lagt"], "Avg_TAMSD": y_fit})
         return self.line, self.slope, self.intercept
 
-    def plot_TAMSD(self, indiv_msds, ensa_msds, fit_range):
+    def plot_TAMSD(self, indiv_msds, ensa_msds, fit_range, frameTime):
         self.indiv_msds = indiv_msds
         self.ensa_msds = ensa_msds
         self.fit_range = fit_range
+        self.frameTime = frameTime
         # get half the track lengths
-        self.indiv_msds_range = int(math.floor(self.indiv_msds.count().max() / 2))
+        self.indiv_msds_range = int(math.floor(self.indiv_msds.count().max() / 3))
         self.half_indices = self.indiv_msds.index[0 : self.indiv_msds_range]
         self.half_indiv_msds = pd.DataFrame(index=self.half_indices)
         for track in self.indiv_msds:
-            half_last_index = (
-                round((self.indiv_msds[track].last_valid_index() / 2) / 0.05) * 0.05
-            )
+            half_last_index = round(
+                (self.indiv_msds[track].last_valid_index() / 2) / (1 / frameTime)
+            ) * (1 / frameTime)
             self.half_indiv_msds = self.half_indiv_msds.join(
                 self.indiv_msds[track][0:half_last_index]
             )
@@ -510,10 +511,10 @@ if __name__ == "__main__":
     pixelWidth = 0.1092  # in microns
 
     # Milliseconds between frames from experiment, typically 50ms or 100ms
-    frameTime = 50  # in milliseconds
+    frameTime = 100  # in milliseconds
 
     # Range of x-values to which we apply the fitting parameters
-    fit_range = [1, 15]  # bounding indices for linear fit
+    fit_range = [1, 30]  # bounding indices for linear fit
 
     # Boolean to toggle calculating and outputting all displacements for all particles at all lag times
     # ! Warning -- Very time intensive
@@ -562,7 +563,7 @@ if __name__ == "__main__":
 
     # * TAMSD and EAMSD Plots
     # Plot TAMSD
-    pMSD.plot_TAMSD(indiv_msds, ensa_msds, fit_range)
+    pMSD.plot_TAMSD(indiv_msds, ensa_msds, fit_range, frameTime)
 
     # Plot EAMSD
     pMSD.plot_EAMSD(ensa_msds, fit_range)
