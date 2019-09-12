@@ -297,8 +297,10 @@ class stat_MSD(object):
             ids.append(particle)
         msds = stat.pandas_concat(msds, keys=ids, names=["particle", "frame"])
         results = msds.mul(msds["N"], axis=0).mean(level=1)
-        # results_stderr = results.div(msds['N'].sem(level=1), axis=0)  # ! USE THIS FOR STANDARD ERROR - MAKING THE CLOUD :)
         results = results.div(msds["N"].mean(level=1), axis=0)
+        results_stdev = msds.mul(msds["N"], axis=0).std(level=1)
+        results_stdev = results.div(msds["N"].mean(level=1), axis=0)
+        results.insert(7, "StdDev", results_stdev["msd"])
         if not detail:
             return results.set_index("lagt")["msd"]
         results["N"] = msds["N"].sum(level=1)

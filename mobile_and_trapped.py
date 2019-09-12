@@ -227,7 +227,7 @@ def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List, frameTime, fit_range):
     plt.show()
 
     # ---------------------------------------------------------------------------
-    # Plot the Averaged Track on top of this plot, set label for legend
+    # Plot the TAMSD Averaged Track on top of this plot, set label for legend
     # ---------------------------------------------------------------------------
 
     # Plot results as half track lengths
@@ -299,7 +299,7 @@ def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List, frameTime, fit_range):
     plt.show()
 
     # ---------------------------------------------------------------------------
-    # Plot the Averaged Track by itself with an error cloud
+    # Plot the TAMSD Averaged Track by itself with an error cloud
     # ---------------------------------------------------------------------------
 
     fig, ax = plt.subplots(1, 1, figsize=(10, 5))
@@ -364,7 +364,7 @@ def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List, frameTime, fit_range):
     plt.show()
 
     # ---------------------------------------------------------------------------
-    # Plot the Averaged Track by itself with an error cloud
+    # Plot the EAMSD Averaged Track with fit and error cloud
     # ---------------------------------------------------------------------------
 
     def plot_AvgMobileEAMSD(EAMSD_DF, mobileTracks_List, frameTime, fit_range):
