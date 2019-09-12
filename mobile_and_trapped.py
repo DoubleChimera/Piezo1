@@ -301,6 +301,7 @@ def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List, frameTime, fit_range):
     # ---------------------------------------------------------------------------
     # Plot the Averaged Track by itself with an error cloud
     # ---------------------------------------------------------------------------
+
     fig, ax = plt.subplots(1, 1, figsize=(10, 5))
     # Plot individual tracks, set label for legend
     ax.plot(
@@ -362,10 +363,13 @@ def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List, frameTime, fit_range):
     # Display the TAMSD plot
     plt.show()
 
+    # ---------------------------------------------------------------------------
+    # Plot the Averaged Track by itself with an error cloud
+    # ---------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-# Plot the Averaged Track by itself with an error cloud
-# ---------------------------------------------------------------------------
+    def plot_AvgMobileEAMSD(EAMSD_DF, mobileTracks_List, frameTime, fit_range):
+        pass
+
 
 if __name__ == "__main__":
 
@@ -430,42 +434,26 @@ if __name__ == "__main__":
     # Plot the Trapped Tracks without any fitting
     plot_TrappedTAMSD(TAMSD_DF, mobileTrappedTracks_Dict["Trapped"], frameTime)
 
-    # Plot the Mobile Tracks without any fitting
+    # Plot the TAMSD Mobile Tracks without any fitting
     # Then...
-    # Plot the Average Track on top of the Mobile Tracks
+    # Plot the TAMSD Average Track on top of the Mobile Tracks
+    # Then...
+    # Plot the TAMSD Average Track with Error and Fitting
     plot_MobileTAMSD(TAMSD_DF, mobileTrappedTracks_Dict["Mobile"], frameTime, fit_range)
 
-    # Plot the Average Mobile Track on top of the plot
-
-    # TODO Plot the Average Mobile Track separately with an Error cloud
-
-    # Plot the Average Mobile Track separately with an Error cloud and a Power Fit
-
-    # Plot the Average Mobile Track separately with an Error cloud and a Linear Fit
     # * -----END   SUBROUTINE----- * #
 
     # ! -----DEBUGGING CODE START----- ! #
-
-    def plot_AvgMobileTAMSD(TAMSD_DF, mobileTracks_List):
+    # Plot EAMSD of Mobile Tracks with Fit
+    def plot_AvgMobileEAMSD(EAMSD_DF, mobileTracks_List, frameTime, fit_range):
         pass
 
-    def plot_AvgMobileTAMSD_PowerFit(TAMSD_DF, mobileTracks_List, fitRange):
-        pass
-
-    def plot_AvgMobileTAMSD_LinearFit(TAMSD_DF, mobileTracks_List, fitRange):
-        pass
-
-    def plot_AvgMobileEAMSD(EAMSD_DF, mobileTracks_List):
-        pass
-
-    # Plot both of them on the same plot
-    def plot_AvgMobileTA_EA_MSD(TAMSD_DF, EAMSD_DF, mobileTracks_List):
-        pass
-
-    def plot_AvgMobileEAMSD_PowerFit(EAMSD_DF, mobileTracks_List, fitRange):
-        pass
-
-    def plot_AvgMobileEAMSD_LinearFit(EAMSD_DF, mobileTracks_List, fitRange):
+    # Plot both AVG TAMSD AND AVG EAMSD on same plot, both with ERROR CLOUDS
+    # Then...
+    # Plot both AVGs with both FITS on same plot
+    def plot_AvgMobileTA_EA_MSD(
+        TAMSD_DF, EAMSD_DF, mobileTracks_List, frameTime, fit_range
+    ):
         pass
 
 
