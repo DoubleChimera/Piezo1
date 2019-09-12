@@ -13,3 +13,7 @@ Instructions:   DON'T EDIT the file_loader.py file, it is a dependency of track_
                 Step 2: Run stat_MSD.py
                 Step 3: Run mobile_and_trapped.py
                 Step 4: TBD...
+
+
+Current problems:   EAMSD StdDev and thus any error clouds need to be re-evaluated for accuracy... C
+                    Currently using a placeholder method to move along with other aspects
