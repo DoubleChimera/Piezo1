@@ -81,12 +81,10 @@ def plot_TrappedTAMSD(TAMSD_DF, trappedTracks_List, frameTime):
             (trappedTAMSDTracks_DF[track].last_valid_index() / 2) / (1 / frameTime)
         ) * (1 / frameTime)
         trappedTAMSD_half_MSDs[track] = trappedTAMSDTracks_DF[track][0:half_last_index]
-        print(trappedTAMSDTracks_DF[track][0.3])
-        print(trappedTAMSD_half_MSDs[track][0.3])
 
-        # trappedTAMSD_half_MSDs = trappedTAMSD_half_MSDs.join(trappedTAMSDTracks_DF[track][0:half_last_index])
     # Average track of all tracks
     avgTrappedTAMSD_half_MSD = trappedTAMSD_half_MSDs.mean(axis=1)
+
     # Plot results as half track lengths
     fig, ax = plt.subplots(figsize=(10, 5))
     # Plot individual tracks, set label for legend
@@ -138,6 +136,237 @@ def plot_TrappedTAMSD(TAMSD_DF, trappedTracks_List, frameTime):
     plt.show()
 
 
+def plot_TAMSD_bestFit(msds, fit_range):
+    fit_range = fit_range
+    msds_vals = msds
+    msds_vals = msds_vals.reset_index(name="Avg_TAMSD")
+    slope, intercept = np.polyfit(
+        np.log(msds_vals["lagt"][fit_range[0] : fit_range[1]]),
+        np.log(msds_vals["Avg_TAMSD"][fit_range[0] : fit_range[1]]),
+        1,
+    )
+    y_fit = np.exp(
+        slope * np.log(msds_vals["lagt"][fit_range[0] : fit_range[1]]) + intercept
+    )
+    line = pd.DataFrame({"lagt": msds_vals["lagt"], "Avg_TAMSD": y_fit})
+    return line, slope, intercept
+
+
+def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List, frameTime, fit_range):
+    # Fix indices so that they are no longer randomized float values
+    lagt = TAMSD_DF.index.values.astype("float64")
+    lagt = np.round(lagt, 1)
+    TAMSD_DF.set_index(lagt, inplace=True)
+    TAMSD_DF.index.name = "lagt"
+    # Setup a trappedTrack dataframe
+    mobileTAMSDTracks_DF = TAMSD_DF.loc[:, mobileTracks_List]
+    # get half the track lengths
+    mobileTAMSD_range = int(math.floor(mobileTAMSDTracks_DF.count().max() / 2))
+    mobileTAMSD_half_indices = np.round(
+        mobileTAMSDTracks_DF.index[0:mobileTAMSD_range], 3
+    )
+    mobileTAMSD_half_MSDs = pd.DataFrame(index=mobileTAMSD_half_indices)
+    for track in mobileTAMSDTracks_DF:
+        half_last_index = round(
+            (mobileTAMSDTracks_DF[track].last_valid_index() / 2) / (1 / frameTime)
+        ) * (1 / frameTime)
+        mobileTAMSD_half_MSDs[track] = mobileTAMSDTracks_DF[track][0:half_last_index]
+
+    # Determine Average Track of all tracks
+    avgMobileTAMSD_half_MSD = mobileTAMSD_half_MSDs.mean(axis=1)
+    avgStdMobileTAMSD_half_MSD = mobileTAMSD_half_MSDs.std(axis=1)
+
+    # Plot results as half track lengths
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+    # Plot individual tracks, set label for legend
+    ax.plot(
+        mobileTAMSD_half_MSDs.index,
+        mobileTAMSD_half_MSDs,
+        "k-",
+        alpha=0.2,
+        label="Mobile Tracks",
+    )
+
+    # Set the scale of the axes to 'log'
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    # Set the window title
+    fig = plt.gcf()
+    fig.canvas.set_window_title("TAMSD of Mobile Tracks")
+    # Set the legend to show only one entry for tracks
+    handles, labels = plt.gca().get_legend_handles_labels()
+    by_label = OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys(), loc="upper left", fontsize=12)
+    # Set the headline/title for the plot
+    fig.suptitle("TAMSD: Mobile Tracks", fontsize=20)
+    # Set the axes labels
+    ax.set_ylabel(r"$\overline{\delta^2 (\Delta)}$  [$\mu$m$^2$]", fontsize=15)
+    ax.set_xlabel("lag times [$s$]", fontsize=15)
+    # Position the axes labels
+    ax.xaxis.set_label_coords(0.5, -0.07)
+    # Determine the min/max values for the x, y axes
+    # Padding value to increase axes by
+    axes_padding = 0.1
+    # Calculate min/max values for axes
+    # Calculate min/max values for axes
+    x_min = avgMobileTAMSD_half_MSD.index[0] - (
+        avgMobileTAMSD_half_MSD.index[0] * axes_padding
+    )
+    x_max = avgMobileTAMSD_half_MSD.index.max() + (
+        avgMobileTAMSD_half_MSD.index.max() * axes_padding
+    )
+    y_min = mobileTAMSD_half_MSDs.min().min() - (
+        mobileTAMSD_half_MSDs.min().min() * axes_padding
+    )
+    y_max = mobileTAMSD_half_MSDs.max().max() + (
+        mobileTAMSD_half_MSDs.max().max() * axes_padding
+    )
+    # Set the min/max values for the x, y axes
+    ax.set(ylim=(y_min, y_max), xlim=(x_min, x_max))
+    # Display the TAMSD plot
+    plt.show()
+
+    # ---------------------------------------------------------------------------
+    # Plot the Averaged Track on top of this plot, set label for legend
+    # ---------------------------------------------------------------------------
+
+    # Plot results as half track lengths
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+    # Plot individual tracks, set label for legend
+    ax.plot(
+        mobileTAMSD_half_MSDs.index,
+        mobileTAMSD_half_MSDs,
+        "k-",
+        alpha=0.2,
+        label="Mobile Tracks",
+    )
+
+    ax.plot(
+        avgMobileTAMSD_half_MSD.index,
+        avgMobileTAMSD_half_MSD,
+        "b-",
+        alpha=1,
+        linewidth=3,
+        label="Averaged Track",
+    )
+    # Linear Fit of Averaged Track
+    Avg_line, Avg_slope, Avg_intercept = plot_TAMSD_bestFit(
+        avgMobileTAMSD_half_MSD, fit_range
+    )
+    ax.plot(
+        Avg_line["lagt"],
+        Avg_line["Avg_TAMSD"],
+        "-r",
+        linewidth=3,
+        label="Linear Fit: y = {:.2f} x + {:.2f}".format(Avg_slope, Avg_intercept),
+    )
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    # Set the window title
+    fig = plt.gcf()
+    fig.canvas.set_window_title("TAMSD of Mobile Tracks")
+    # Set the legend to show only one entry for tracks
+    handles, labels = plt.gca().get_legend_handles_labels()
+    by_label = OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys(), loc="upper left", fontsize=12)
+    # Set the headline/title for the plot
+    fig.suptitle("TAMSD: Mobile Tracks", fontsize=20)
+    # Set the axes labels
+    ax.set_ylabel(r"$\overline{\delta^2 (\Delta)}$  [$\mu$m$^2$]", fontsize=15)
+    ax.set_xlabel("lag times [$s$]", fontsize=15)
+    # Position the axes labels
+    ax.xaxis.set_label_coords(0.5, -0.07)
+    # Determine the min/max values for the x, y axes
+    # Padding value to increase axes by
+    axes_padding = 0.1
+    # Calculate min/max values for axes
+    # Calculate min/max values for axes
+    x_min = avgMobileTAMSD_half_MSD.index[0] - (
+        avgMobileTAMSD_half_MSD.index[0] * axes_padding
+    )
+    x_max = avgMobileTAMSD_half_MSD.index.max() + (
+        avgMobileTAMSD_half_MSD.index.max() * axes_padding
+    )
+    y_min = mobileTAMSD_half_MSDs.min().min() - (
+        mobileTAMSD_half_MSDs.min().min() * axes_padding
+    )
+    y_max = mobileTAMSD_half_MSDs.max().max() + (
+        mobileTAMSD_half_MSDs.max().max() * axes_padding
+    )
+    # Set the min/max values for the x, y axes
+    ax.set(ylim=(y_min, y_max), xlim=(x_min, x_max))
+    # Display the TAMSD plot
+    plt.show()
+
+    # ---------------------------------------------------------------------------
+    # Plot the Averaged Track by itself with an error cloud
+    # ---------------------------------------------------------------------------
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+    # Plot individual tracks, set label for legend
+    ax.plot(
+        avgMobileTAMSD_half_MSD.index,
+        avgMobileTAMSD_half_MSD,
+        "b-",
+        alpha=1,
+        linewidth=3,
+        label="Averaged Track",
+    )
+    plt.fill_between(
+        avgMobileTAMSD_half_MSD.index,
+        avgMobileTAMSD_half_MSD - avgStdMobileTAMSD_half_MSD,
+        avgMobileTAMSD_half_MSD + avgStdMobileTAMSD_half_MSD,
+        alpha=0.3,
+    )
+    ax.plot(
+        Avg_line["lagt"],
+        Avg_line["Avg_TAMSD"],
+        "-r",
+        linewidth=3,
+        label="Linear Fit: y = {:.2f} x + {:.2f}".format(Avg_slope, Avg_intercept),
+    )
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    # Set the window title
+    fig = plt.gcf()
+    fig.canvas.set_window_title("TAMSD of Mobile Tracks")
+    # Set the legend to show only one entry for tracks
+    handles, labels = plt.gca().get_legend_handles_labels()
+    by_label = OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys(), loc="upper left", fontsize=12)
+    # Set the headline/title for the plot
+    fig.suptitle("TAMSD: Mobile Tracks", fontsize=20)
+    # Set the axes labels
+    ax.set_ylabel(r"$\overline{\delta^2 (\Delta)}$  [$\mu$m$^2$]", fontsize=15)
+    ax.set_xlabel("lag times [$s$]", fontsize=15)
+    # Position the axes labels
+    ax.xaxis.set_label_coords(0.5, -0.07)
+    # Determine the min/max values for the x, y axes
+    # Padding value to increase axes by
+    axes_padding = 0.1
+    # Calculate min/max values for axes
+    # Calculate min/max values for axes
+    x_min = avgMobileTAMSD_half_MSD.index[0] - (
+        avgMobileTAMSD_half_MSD.index[0] * axes_padding
+    )
+    x_max = avgMobileTAMSD_half_MSD.index.max() + (
+        avgMobileTAMSD_half_MSD.index.max() * axes_padding
+    )
+    y_min = mobileTAMSD_half_MSDs.min().min() - (
+        mobileTAMSD_half_MSDs.min().min() * axes_padding
+    )
+    y_max = mobileTAMSD_half_MSDs.max().max() + (
+        mobileTAMSD_half_MSDs.max().max() * axes_padding
+    )
+    # Set the min/max values for the x, y axes
+    ax.set(ylim=(y_min, y_max), xlim=(x_min, x_max))
+    # Display the TAMSD plot
+    plt.show()
+
+
+# ---------------------------------------------------------------------------
+# Plot the Averaged Track by itself with an error cloud
+# ---------------------------------------------------------------------------
+
 if __name__ == "__main__":
 
     # * -----USER INPUTS BELOW----- * #
@@ -163,8 +392,9 @@ if __name__ == "__main__":
     # Sqrt[2 * (12.7 ** 2) ] = 0.018
     # Try defining mobile tracks as those with taMSD(1 sec) > 0.018 um^2
     localError = 0.018
+
     # The lag time at which to check this cutoff (in seconds)
-    # Can use any value compatible with frameTime
+    # Can use any value compatible with frameTime (any multiple of frameTime)
     localErrorLagTime = 1.0
 
     # Range of data to fit to a line
@@ -197,14 +427,24 @@ if __name__ == "__main__":
     # ! Uncomment below to use the loader
     # testLoadMobileTrappedTracks_Dict = load_MobileTrapped_json(jsonMobileTrappedDictPath)
 
-    # Plot the trapped and mobile tracks on separate plots without any fitting
+    # Plot the Trapped Tracks without any fitting
     plot_TrappedTAMSD(TAMSD_DF, mobileTrappedTracks_Dict["Trapped"], frameTime)
+
+    # Plot the Mobile Tracks without any fitting
+    # Then...
+    # Plot the Average Track on top of the Mobile Tracks
+    plot_MobileTAMSD(TAMSD_DF, mobileTrappedTracks_Dict["Mobile"], frameTime, fit_range)
+
+    # Plot the Average Mobile Track on top of the plot
+
+    # TODO Plot the Average Mobile Track separately with an Error cloud
+
+    # Plot the Average Mobile Track separately with an Error cloud and a Power Fit
+
+    # Plot the Average Mobile Track separately with an Error cloud and a Linear Fit
     # * -----END   SUBROUTINE----- * #
 
     # ! -----DEBUGGING CODE START----- ! #
-
-    def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List):
-        pass
 
     def plot_AvgMobileTAMSD(TAMSD_DF, mobileTracks_List):
         pass
@@ -240,10 +480,10 @@ if __name__ == "__main__":
 # TODO 3.0   Plot Mobile and Trapped Tracks with output to file option
 # TODO 4.0   TAMSD of mobile tracks
 # TODO 4.1   --Power Law fit
-# TODO 4.2   --Slope Fit
+# TODO 4.2   --Linear Fit
 # TODO 5.0   EAMSD of mobile tracks
 # TODO 5.1   --Power Law fit
-# TODO 5.2   --Slope Fit
+# TODO 5.2   --Linear Fit
 # TODO 6.0   TAMSD and EAMSD mobile tracks, both on same plot
 # TODO 6.1   --Linear Fit
 # TODO 6.2   --Linear Fit on Log Data

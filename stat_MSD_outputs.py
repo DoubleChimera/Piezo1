@@ -366,6 +366,7 @@ class plot_MSD(object):
         self.line, self.slope, self.intercept = plot_MSD.plot_TAMSD_bestFit(
             self, self.avg_half_msd, self.fit_range
         )
+        # Label for Linear Fit
         ax.plot(
             self.line["lagt"],
             self.line["Avg_TAMSD"],
