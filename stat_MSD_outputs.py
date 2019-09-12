@@ -522,7 +522,7 @@ if __name__ == "__main__":
     # Boolean to toggle calculating and outputting all displacements for all particles at all lag times
     # ! Warning -- Very time intensive
     # ! Can take upwards of an hour with enough points to aggregate
-    generate_All_Lag_Outputs = False
+    generate_All_Lag_Outputs = True
 
     # * ---------- * END OF USER INPUTS * ---------- * #
 

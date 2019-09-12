@@ -316,7 +316,7 @@ def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List, frameTime, fit_range):
         avgMobileTAMSD_half_MSD.index,
         avgMobileTAMSD_half_MSD - avgStdMobileTAMSD_half_MSD,
         avgMobileTAMSD_half_MSD + avgStdMobileTAMSD_half_MSD,
-        alpha=0.3,
+        alpha=0.2,
     )
     ax.plot(
         Avg_line["lagt"],
@@ -367,8 +367,86 @@ def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List, frameTime, fit_range):
     # Plot the EAMSD Averaged Track with fit and error cloud
     # ---------------------------------------------------------------------------
 
-    def plot_AvgMobileEAMSD(EAMSD_DF, mobileTracks_List, frameTime, fit_range):
-        pass
+
+# ! THIS IS THE COPIED BESTFIT CODE FROM STAT_MSD
+def plot_EAMSD_bestFit(msds, fit_range):
+    fit_range = fit_range
+    msds_vals = msds
+    slope, intercept = np.polyfit(
+        np.log(msds_vals["lagt"][fit_range[0] : fit_range[1]]),
+        np.log(msds_vals["msd"][fit_range[0] : fit_range[1]]),
+        1,
+    )
+    y_fit = np.exp(
+        slope * np.log(msds_vals["lagt"][fit_range[0] : fit_range[1]]) + intercept
+    )
+    line = pd.DataFrame({"lagt": msds_vals["lagt"], "Avg_EAMSD": y_fit})
+    return line, slope, intercept
+
+    # ! YOU MAY HAVE TO REDO THE ENSEMBLE CALC IF YOU ARE USING THE OLD DATAFRAME BECAUSE IT
+    # ! INCLUDES ALL POINTS
+    # ! REVISIT HOW YOU DID THE ERROR CLOUD FOR EAMSD< IT IS LIKELY WRONG
+    # ! Step 1: recalc ensemble MSD for mobile tracks only
+    # ! STEP !: MAY NO HAVE TO RECALC IF YOU HAVE THE AGGREGATED OUTPUT !!! WOO :D:D:D:D
+    # ! Step 2: Output that as a .json file
+    # ! Step 3: Then plot the corresponding data with a fit and error cloud
+
+    # ! THIS IS THE FUNCTION I AM CURRENTLY WRITING
+
+
+def plot_AvgMobileEAMSD(EAMSD_DF, mobileTracks_List, frameTime, fit_range):
+    return None
+
+    # ! BELOW THIS IS THE COPIED CODE FROM STAT_MSD
+
+
+def plot_EAMSD(ensa_msds, fit_range):
+    ensa_msds = ensa_msds
+    fit_range = fit_range
+    # Plot results as half the track lengths by modifiying plotting window
+    fig, ax = plt.subplots(figsize=(10, 5))
+    # Plot EAMSD of tracks
+    ax.plot(ensa_msds["lagt"], ensa_msds["msd"], "o", label="Ensemble Average MSD")
+    # Determine linear fit to data
+    # Set number of initial points to fit
+    # Fit from EAMSD calcs
+    line, slope, intercept = plot_EAMSD_bestFit(ensa_msds, fit_range)
+    # Plot linear fit of EAMSD data
+    ax.plot(
+        line["lagt"],
+        line["Avg_EAMSD"],
+        "-r",
+        linewidth=3,
+        label="Linear Fit: y = {:.2f} x + {:.2f}".format(slope, intercept),
+    )
+    # Plot error as a cloud around linear fit # ! Not implemented
+    # Set the scale of the axes to 'log'
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    # Set the window title
+    fig = plt.gcf()
+    fig.canvas.set_window_title("Ensemble-Averaged MSD")
+    # Set the legend
+    ax.legend(loc="upper left", fontsize=12)
+    # Set the headline/title for the plot
+    fig.suptitle("Ensemble-Averaged MSD with a Linear Fit", fontsize=20)
+    # Set the axes labels
+    ax.set_ylabel(r"$\langle$$\bf{r}$$^2$($\Delta)\rangle$ [$\mu$m$^2$]", fontsize=15)
+    ax.set_xlabel("lag time [$s$]", fontsize=15)
+    # Position the axes labels
+    ax.xaxis.set_label_coords(0.5, -0.07)
+    # Determine the min/max values for the x, y axes
+    # Padding value to increase axes by
+    axes_padding = 0.1
+    # Calculate min/max values for axes
+    x_min = ensa_msds["lagt"].min() - (ensa_msds["lagt"].min() * axes_padding)
+    x_max = ensa_msds["lagt"].max() + (ensa_msds["lagt"].max() * axes_padding)
+    y_min = ensa_msds["msd"].min() - (ensa_msds["msd"].min() * axes_padding)
+    y_max = ensa_msds["msd"].max() + (ensa_msds["msd"].max() * axes_padding)
+    # Set the min/max values for x, y axes
+    ax.set(ylim=(y_min, y_max), xlim=(x_min, x_max))
+    # Display the EAMSD plot
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -445,8 +523,9 @@ if __name__ == "__main__":
 
     # ! -----DEBUGGING CODE START----- ! #
     # Plot EAMSD of Mobile Tracks with Fit
-    def plot_AvgMobileEAMSD(EAMSD_DF, mobileTracks_List, frameTime, fit_range):
-        pass
+    plot_AvgMobileEAMSD(
+        EAMSD_DF, mobileTrappedTracks_Dict["Mobile"], frameTime, fit_range
+    )
 
     # Plot both AVG TAMSD AND AVG EAMSD on same plot, both with ERROR CLOUDS
     # Then...
