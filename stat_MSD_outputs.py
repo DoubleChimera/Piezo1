@@ -143,7 +143,7 @@ class stat_MSD(object):
         track,
         pixelWidth,
         frameTime,
-        max_lagtime=100,
+        max_lagtime=1000,
         pos_columns=None,
         genAllLagsOutput=False,
         detail=True,
@@ -280,7 +280,7 @@ class stat_MSD(object):
         tracks,
         pixelWidth,
         frameTime,
-        max_lagtime=100,
+        max_lagtime=1000,
         detail=True,
         pos_columns=None,
     ):
@@ -289,6 +289,7 @@ class stat_MSD(object):
         ids = []
         msds = []
         self.tracks = tracks
+        print(tracks)
         for particle, track in self.tracks.reset_index(drop=True).groupby("particle"):
             msdNan_results, allLags_DF = stat.msdNan(
                 track, pixelWidth, frameTime, max_lagtime, pos_columns
@@ -331,7 +332,7 @@ class plot_MSD(object):
         self.fit_range = fit_range
         self.frameTime = frameTime
         # get half the track lengths
-        self.indiv_msds_range = int(math.floor(self.indiv_msds.count().max() / 3))
+        self.indiv_msds_range = int(math.floor(self.indiv_msds.count().max() / 2))
         self.half_indices = self.indiv_msds.index[0 : self.indiv_msds_range]
         self.half_indiv_msds = pd.DataFrame(index=self.half_indices)
         for track in self.indiv_msds:
@@ -522,7 +523,7 @@ if __name__ == "__main__":
     # Boolean to toggle calculating and outputting all displacements for all particles at all lag times
     # ! Warning -- Very time intensive
     # ! Can take upwards of an hour with enough points to aggregate
-    generate_All_Lag_Outputs = True
+    generate_All_Lag_Outputs = False
 
     # * ---------- * END OF USER INPUTS * ---------- * #
 
@@ -542,7 +543,7 @@ if __name__ == "__main__":
 
     # * Ensemble average mean squared displacement calculation
     # Get the ensemble msd trajectory
-    ensa_msds = stat.ensa_msd(tracks, pixelWidth, frameTime)
+    ensa_msds = stat.ensa_msd(tracks, pixelWidth, frameTime, max_lagtime=1000)
     # Output EAMSD .json to savePath
     jc.MSD_df_to_json(savePath, ensa_msds)
 

@@ -7,6 +7,8 @@ import numpy as np
 import pandas as pd
 from collections import OrderedDict
 
+# import stat_MSD_outputs as statMSD
+
 
 class json_converter(object):
     def json_SelectedTracks_to_DF(self, file_path):
@@ -366,6 +368,24 @@ def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List, frameTime, fit_range):
     # ---------------------------------------------------------------------------
     # Plot the EAMSD Averaged Track with fit and error cloud
     # ---------------------------------------------------------------------------
+    # // TODO Step 0: Import stat_MSD_outputs.py
+    # // TODO Step 1: Load the original tracks .json into memory
+    # // TODO Step 2: Make a new dataframe with just the mobile tracks, same format
+
+
+def genMobileEAMSDTracks(selectedTracks_DF, mobileTrack_List, savePath):
+    mobileTrack_DF = pd.DataFrame()
+    for particle, track in selectedTracks_DF.reset_index(drop=True).groupby("particle"):
+        if particle in mobileTrack_List:
+            mobileTrack_DF = mobileTrack_DF.append(track, ignore_index=True)
+    return mobileTrack_DF
+    # reindex by particle, if particle is in mobileList, add to a new DF, after all additions reindex and output
+
+    # TODO Step 3: Pass new dataframe into stat_MSD_outputs.py ensaMSD func
+    # TODO Step 4: Output the result as a .json of mobile_EAMSD_DF, and output mobile_EAMSD_allTracksAllLags.json as well
+    # TODO Step 5: Plot the mobile_EAMSD data with an error cloud
+    # TODO Step 6: Plot the mobile_EAMSD data with a fit and error cloud
+    # TODO Step 7: Plot the mobile_TAMSD and mobile_EAMSD data with fits and error clouds on same plot
 
 
 # ! THIS IS THE COPIED BESTFIT CODE FROM STAT_MSD
@@ -452,12 +472,16 @@ def plot_EAMSD(ensa_msds, fit_range):
 if __name__ == "__main__":
 
     # * -----USER INPUTS BELOW----- * #
+    # Path to load selected_track_list.json from track_selector.py
+    jsonTracksLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
+
     # Paths to MSD .json files to load as dataframes
     jsonSelectedTracksLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
     jsonTAMSDLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/TAMSD.json"
     jsonEAMSDLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/EAMSD.json"
     # Path to load Mobile Trapped Tracks dict
     jsonMobileTrappedDictPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/Mobile_Trapped_tracks.json"
+
     # TODO Disabled for now
     # jsonAllDisplacementsLoadPath = r"/home/vivek/Documents/Piezo1/temp_outputs/Statistics/MSDs/All_lag_displacements_microns.json"
 
@@ -519,9 +543,15 @@ if __name__ == "__main__":
     # Plot the TAMSD Average Track with Error and Fitting
     plot_MobileTAMSD(TAMSD_DF, mobileTrappedTracks_Dict["Mobile"], frameTime, fit_range)
 
+    # Take the selected track list, and produce a new DF with just the mobile tracks
+    mobileTracks_DF = genMobileEAMSDTracks(
+        selectedTracks_DF, mobileTrappedTracks_Dict["Mobile"], savePath
+    )
+
     # * -----END   SUBROUTINE----- * #
 
     # ! -----DEBUGGING CODE START----- ! #
+
     # Plot EAMSD of Mobile Tracks with Fit
     plot_AvgMobileEAMSD(
         EAMSD_DF, mobileTrappedTracks_Dict["Mobile"], frameTime, fit_range
