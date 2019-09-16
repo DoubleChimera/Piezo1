@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 from collections import OrderedDict
 
-# import stat_MSD_outputs as statMSD
+import stat_MSD_outputs
 
 
 class json_converter(object):
@@ -364,13 +364,19 @@ def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List, frameTime, fit_range):
     ax.set(ylim=(y_min, y_max), xlim=(x_min, x_max))
     # Display the TAMSD plot
     plt.show()
+    # combine these into a DF with index lagt and columns Avg_TAMSD and StdDev
+    mobileTAMSDBestFit_DF = pd.concat(
+        [
+            avgMobileTAMSD_half_MSD.rename("Avg_TAMSD"),
+            avgStdMobileTAMSD_half_MSD.rename("StdDev_TAMSD"),
+        ],
+        axis=1,
+    )
+    return mobileTAMSDBestFit_DF
 
     # ---------------------------------------------------------------------------
-    # Plot the EAMSD Averaged Track with fit and error cloud
+    # Plot the EAMSD Averaged Track with fit and # ! error cloud
     # ---------------------------------------------------------------------------
-    # // TODO Step 0: Import stat_MSD_outputs.py
-    # // TODO Step 1: Load the original tracks .json into memory
-    # // TODO Step 2: Make a new dataframe with just the mobile tracks, same format
 
 
 def genMobileEAMSDTracks(selectedTracks_DF, mobileTrack_List, savePath):
@@ -381,109 +387,97 @@ def genMobileEAMSDTracks(selectedTracks_DF, mobileTrack_List, savePath):
     return mobileTrack_DF
     # reindex by particle, if particle is in mobileList, add to a new DF, after all additions reindex and output
 
-    # TODO Step 3: Pass new dataframe into stat_MSD_outputs.py ensaMSD func
-    # TODO Step 4: Output the result as a .json of mobile_EAMSD_DF, and output mobile_EAMSD_allTracksAllLags.json as well
-    # TODO Step 5: Plot the mobile_EAMSD data with an error cloud
-    # TODO Step 6: Plot the mobile_EAMSD data with a fit and error cloud
-    # TODO Step 7: Plot the mobile_TAMSD and mobile_EAMSD data with fits and error clouds on same plot
 
-
-# ! THIS IS THE COPIED BESTFIT CODE FROM STAT_MSD
-def plot_EAMSD_bestFit(msds, fit_range):
-    fit_range = fit_range
-    msds_vals = msds
-    slope, intercept = np.polyfit(
-        np.log(msds_vals["lagt"][fit_range[0] : fit_range[1]]),
-        np.log(msds_vals["msd"][fit_range[0] : fit_range[1]]),
-        1,
+def plot_MobileEAMSD(mobileTracks_DF, pixelWidth, frameTime, fit_range):
+    mobileEAMSDTracks = stat.ensa_msd(
+        mobileTracks_DF, pixelWidth, frameTime, max_lagtime=1000
     )
-    y_fit = np.exp(
-        slope * np.log(msds_vals["lagt"][fit_range[0] : fit_range[1]]) + intercept
-    )
-    line = pd.DataFrame({"lagt": msds_vals["lagt"], "Avg_EAMSD": y_fit})
-    return line, slope, intercept
-
-    # ! YOU MAY HAVE TO REDO THE ENSEMBLE CALC IF YOU ARE USING THE OLD DATAFRAME BECAUSE IT
-    # ! INCLUDES ALL POINTS
-    # ! REVISIT HOW YOU DID THE ERROR CLOUD FOR EAMSD< IT IS LIKELY WRONG
-    # ! Step 1: recalc ensemble MSD for mobile tracks only
-    # ! STEP 1: MAY NO HAVE TO RECALC IF YOU HAVE THE AGGREGATED OUTPUT !!! WOO :D:D:D:D
-    # ! Step 2: Output that as a .json file
-    # ! Step 3: Then plot the corresponding data with a fit and error cloud
-
-    # ! THIS IS THE FUNCTION I AM CURRENTLY WRITING
+    pMSD.plot_EAMSD(mobileEAMSDTracks, fit_range, mobile=True)
+    return mobileEAMSDTracks
 
 
-def plot_AvgMobileEAMSD(EAMSD_DF, mobileTracks_List, frameTime, fit_range):
-    return None
-
-    # ! BELOW THIS IS THE COPIED CODE FROM STAT_MSD
-
-
-def plot_EAMSD(ensa_msds, fit_range):
-    ensa_msds = ensa_msds
-    fit_range = fit_range
-    # Plot results as half the track lengths by modifiying plotting window
-    fig, ax = plt.subplots(figsize=(10, 5))
-    # Plot EAMSD of tracks
-    ax.plot(ensa_msds["lagt"], ensa_msds["msd"], "o", label="Ensemble Average MSD")
-    # Determine linear fit to data
-    # Set number of initial points to fit
-    # Fit from EAMSD calcs
-    line, slope, intercept = plot_EAMSD_bestFit(ensa_msds, fit_range)
-    # Plot linear fit of EAMSD data
+def plot_AvgMobileTA_EA_MSD(
+    avgTAMSD_DF, mobileEAMSD_DF, pixelWidth, frameTime, fit_range
+):
+    fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+    # Plot TAMSD Avg track, set label for legend
     ax.plot(
-        line["lagt"],
-        line["Avg_EAMSD"],
-        "-r",
+        avgTAMSD_DF.index,
+        avgTAMSD_DF["Avg_TAMSD"],
+        "b-",
+        alpha=1,
         linewidth=3,
-        label="Linear Fit: y = {:.2f} x + {:.2f}".format(slope, intercept),
+        label=r"$\langle$TAMSD$\rangle$",
     )
-    # Plot error as a cloud around linear fit # ! Not implemented
-    # Set the scale of the axes to 'log'
+    plt.fill_between(
+        avgTAMSD_DF.index,
+        avgTAMSD_DF["Avg_TAMSD"] - avgTAMSD_DF["StdDev_TAMSD"],
+        avgTAMSD_DF["Avg_TAMSD"] + avgTAMSD_DF["StdDev_TAMSD"],
+        alpha=0.2,
+    )
+    # best fit line for TAMSD plotting would go here
+
+    # Plot EAMSD, set label for legend
+    ax.plot(
+        mobileEAMSD_DF["lagt"],
+        mobileEAMSD_DF["msd"],
+        "r-",
+        alpha=1,
+        linewidth=3,
+        label=r"$\langle$MSD$\rangle$$_{ens}$",
+    )
+    plt.fill_between(
+        mobileEAMSD_DF["lagt"],
+        mobileEAMSD_DF["msd"] - mobileEAMSD_DF["StdDev"],
+        mobileEAMSD_DF["msd"] + mobileEAMSD_DF["StdDev"],
+        alpha=0.2,
+    )
+
     ax.set_xscale("log")
     ax.set_yscale("log")
     # Set the window title
     fig = plt.gcf()
-    fig.canvas.set_window_title("Ensemble-Averaged MSD")
-    # Set the legend
-    ax.legend(loc="upper left", fontsize=12)
+    fig.canvas.set_window_title("TAMSD and EAMSD of Mobile Tracks")
+    # Set the legend to show only one entry for tracks
+    handles, labels = plt.gca().get_legend_handles_labels()
+    by_label = OrderedDict(zip(labels, handles))
+    ax.legend(by_label.values(), by_label.keys(), loc="upper left", fontsize=15)
     # Set the headline/title for the plot
-    fig.suptitle("Ensemble-Averaged MSD with a Linear Fit", fontsize=20)
+    fig.suptitle("TAMSD and EAMSD of Mobile Tracks", fontsize=20)
     # Set the axes labels
-    ax.set_ylabel(r"$\langle$$\bf{r}$$^2$($\Delta)\rangle$ [$\mu$m$^2$]", fontsize=15)
-    ax.set_xlabel("lag time [$s$]", fontsize=15)
+    ax.set_ylabel(r"$\overline{\delta^2 (\Delta)}$  [$\mu$m$^2$]", fontsize=15)
+    ax.set_xlabel("lag times [$s$]", fontsize=15)
     # Position the axes labels
     ax.xaxis.set_label_coords(0.5, -0.07)
     # Determine the min/max values for the x, y axes
     # Padding value to increase axes by
     axes_padding = 0.1
     # Calculate min/max values for axes
-    x_min = ensa_msds["lagt"].min() - (ensa_msds["lagt"].min() * axes_padding)
-    x_max = ensa_msds["lagt"].max() + (ensa_msds["lagt"].max() * axes_padding)
-    y_min = ensa_msds["msd"].min() - (ensa_msds["msd"].min() * axes_padding)
-    y_max = ensa_msds["msd"].max() + (ensa_msds["msd"].max() * axes_padding)
-    # Set the min/max values for x, y axes
+    # Calculate min/max values for axes
+    x_min = avgTAMSD_DF.index[0] - (avgTAMSD_DF.index[0] * axes_padding)
+    x_max = avgTAMSD_DF.index.max() + (avgTAMSD_DF.index.max() * axes_padding)
+    y_min = avgTAMSD_DF.min().min() - (avgTAMSD_DF.min().min() * axes_padding)
+    y_max = avgTAMSD_DF.max().max() + (avgTAMSD_DF.max().max() * axes_padding)
+    # Set the min/max values for the x, y axes
     ax.set(ylim=(y_min, y_max), xlim=(x_min, x_max))
-    # Display the EAMSD plot
+    # Display the TAMSD plot
     plt.show()
 
 
 if __name__ == "__main__":
 
     # * -----USER INPUTS BELOW----- * #
-    # Path to load selected_track_list.json from track_selector.py
-    jsonTracksLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
-
     # Paths to MSD .json files to load as dataframes
+    # Selected Tracks DF
     jsonSelectedTracksLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
+    # TAMSD of ALL Tracks DF (Trapped and Mobile)
     jsonTAMSDLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/TAMSD.json"
+    # EAMSD of ALL Tracks DF (Trapped and Mobile)
     jsonEAMSDLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/EAMSD.json"
-    # Path to load Mobile Trapped Tracks dict
+    # Dict -List of Mobile and Trapped Tracks
     jsonMobileTrappedDictPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/Mobile_Trapped_tracks.json"
-
-    # TODO Disabled for now
-    # jsonAllDisplacementsLoadPath = r"/home/vivek/Documents/Piezo1/temp_outputs/Statistics/MSDs/All_lag_displacements_microns.json"
+    # ALL Tracks ALL Lags DF (Trapped and Mobile)
+    jsonAllTracksAllLags = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/All_Lagtimes.json"
 
     # Path to main directory for saving outputs
     savePath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs"
@@ -518,8 +512,7 @@ if __name__ == "__main__":
     selectedTracks_DF = jc.json_SelectedTracks_to_DF(jsonSelectedTracksLoadPath)
     TAMSD_DF = pd.read_json(jsonTAMSDLoadPath, orient="split")
     EAMSD_DF = pd.read_json(jsonEAMSDLoadPath, orient="split")
-    # * Disabled for now, will enable if use-case arises
-    # AllDisplacements_DF = pd.read_json(jsonAllDisplacementsLoadPath, orient="split")
+    AllTracksLags_DF = pd.read_json(jsonAllTracksAllLags, orient="split")
 
     # Setup the index for TAMSD
     TAMSD_DF.set_index("lagt", inplace=True)
@@ -541,48 +534,50 @@ if __name__ == "__main__":
     # Plot the TAMSD Average Track on top of the Mobile Tracks
     # Then...
     # Plot the TAMSD Average Track with Error and Fitting
-    plot_MobileTAMSD(TAMSD_DF, mobileTrappedTracks_Dict["Mobile"], frameTime, fit_range)
+    mobileTAMSDBestFit_DF = plot_MobileTAMSD(
+        TAMSD_DF, mobileTrappedTracks_Dict["Mobile"], frameTime, fit_range
+    )
 
     # Take the selected track list, and produce a new DF with just the mobile tracks
     mobileTracks_DF = genMobileEAMSDTracks(
         selectedTracks_DF, mobileTrappedTracks_Dict["Mobile"], savePath
     )
 
+    # Instantiate classes from stat_MSD_outputs module
+    stat = stat_MSD_outputs.stat_MSD()
+    pMSD = stat_MSD_outputs.plot_MSD()
+
+    # Plot EAMSD of Mobile Tracks with Fit and return the mobileEAMSDTracks_DF
+    mobileEAMSDTracks_DF = plot_MobileEAMSD(
+        mobileTracks_DF, pixelWidth, frameTime, fit_range
+    )
+
+    # Plot Avg TAMSD and EAMSD on same plot
+    plot_AvgMobileTA_EA_MSD(
+        mobileTAMSDBestFit_DF, mobileEAMSDTracks_DF, pixelWidth, frameTime, fit_range
+    )
+
     # * -----END   SUBROUTINE----- * #
 
     # ! -----DEBUGGING CODE START----- ! #
 
-    # Plot EAMSD of Mobile Tracks with Fit
-    plot_AvgMobileEAMSD(
-        EAMSD_DF, mobileTrappedTracks_Dict["Mobile"], frameTime, fit_range
-    )
+    # TODO After this point you will begin histogramming alpha values from the TAMSD ...
 
-    # Plot both AVG TAMSD AND AVG EAMSD on same plot, both with ERROR CLOUDS
-    # Then...
-    # Plot both AVGs with both FITS on same plot
-    def plot_AvgMobileTA_EA_MSD(
-        TAMSD_DF, EAMSD_DF, mobileTracks_List, frameTime, fit_range
-    ):
-        pass
-
-
-# ! After this point you will begin histogramming alpha values from the TAMSD ...
-
-# ! -----DEBUGGING CODE   END----- ! #
+    # ! -----DEBUGGING CODE   END----- ! #
 
 
 # --------------------------------------------------------------------------------------------------
 # // TODO 1.0   Load a .json of all tracks
 # // TODO 2.0   Use selection criterion to differentiate mobile and trapped tracks
-# TODO 3.0   Plot Mobile and Trapped Tracks with output to file option
-# TODO 4.0   TAMSD of mobile tracks
-# TODO 4.1   --Power Law fit
-# TODO 4.2   --Linear Fit
-# TODO 5.0   EAMSD of mobile tracks
-# TODO 5.1   --Power Law fit
-# TODO 5.2   --Linear Fit
-# TODO 6.0   TAMSD and EAMSD mobile tracks, both on same plot
-# TODO 6.1   --Linear Fit
-# TODO 6.2   --Linear Fit on Log Data
-# TODO 7.0   Plot any individual mobile or trapped track to visualize its path
+# // TODO 3.0   Plot Mobile and Trapped Tracks with output to file option
+# // TODO 4.0   TAMSD of mobile tracks
+# // TODO 4.1   --Power Law fit
+# // TODO 4.2   --Linear Fit
+# // TODO 5.0   EAMSD of mobile tracks
+# // TODO 5.1   --Power Law fit
+# // TODO 5.2   --Linear Fit
+# // TODO 6.0   TAMSD and EAMSD mobile tracks, both on same plot
+# // TODO 6.1   --Linear Fit
+# // TODO 6.2   --Linear Fit on Log Data
+# // TODO 7.0   Plot any individual mobile or trapped track to visualize its path
 # TODO 8.0   Distribution of alpha values TAMSD for upto 10% trajectory time

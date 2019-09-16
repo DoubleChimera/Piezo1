@@ -72,7 +72,7 @@ class stat_MSD(object):
     def compute_drift(self, tracks, smoothing=0, pos_columns=["x", "y"]):
         """ Return the ensemble drift, xy(t)
         """
-        f_sort = stat.pandas_sort(tracks, ["particle", "frame"])
+        f_sort = stat_MSD.pandas_sort(self, tracks, ["particle", "frame"])
         f_diff = f_sort[list(pos_columns) + ["particle", "frame"]].diff()
 
         f_diff.rename(columns={"frame": "frame_diff"}, inplace=True)
@@ -83,7 +83,7 @@ class stat_MSD(object):
         mask = (f_diff["particle"] == 0) & (f_diff["frame_diff"] == 1)
         dx = f_diff.loc[mask, pos_columns + ["frame"]].groupby("frame").mean()
         if smoothing > 0:
-            dx = stat.pandas_rolling(dx, smoothing, min_periods=0)
+            dx = stat_MSD.pandas_rolling(self, dx, smoothing, min_periods=0)
         return dx.cumsum()
 
     def msd_N(self, N, t):
@@ -176,15 +176,15 @@ class stat_MSD(object):
 
         lagtimes = np.arange(1, max_lagtime + 1)
 
-        results, allLags_DF = stat.msd_iter(
-            self.pos.values, lagtimes, result_columns, genAllLagsOutput
+        results, allLags_DF = stat_MSD.msd_iter(
+            self, self.pos.values, lagtimes, result_columns, genAllLagsOutput
         )
 
         results["msd"] = results[result_columns[-len(pos_columns) :]].sum(1)
         if detail:
             # effective number of measurements
             # approximately corrected with number of gaps
-            results["N"] = stat.msd_N(len(self.pos), lagtimes) * (
+            results["N"] = stat_MSD.msd_N(self, len(self.pos), lagtimes) * (
                 len(self.track) / len(self.pos)
             )
         results["lagt"] = results.index.values / float(frameTime)
@@ -203,7 +203,7 @@ class stat_MSD(object):
         tracks,
         pixelWidth,
         frameTime,
-        max_lagtime=100,
+        max_lagtime=1000,
         statistic="msd",
         genAllLagsOutput=False,
         pos_columns=None,
@@ -227,14 +227,15 @@ class stat_MSD(object):
             allLagsOutput_DF.insert(2, "lagt", (self.tracks["frame"] * self.frameTime))
             self.lag_columns = ["_lag{}".format(l) for l in self.maxLagTime]
             self.lag_results = list(
-                stat.genLagColumns(self.lag_columns, self.pos_columns)
+                stat_MSD.genLagColumns(self, self.lag_columns, self.pos_columns)
             )
             allLagsOutput_DF = allLagsOutput_DF.reindex(
                 columns=allLagsOutput_DF.columns.tolist() + self.lag_results
             )
             allLagsOutput_DF.set_index("particle", inplace=True)
             for particle, track in self.tracks.groupby("particle"):
-                results, allLags_DF = stat.msdNan(
+                results, allLags_DF = stat_MSD.msdNan(
+                    self,
                     track,
                     pixelWidth,
                     frameTime,
@@ -255,7 +256,7 @@ class stat_MSD(object):
                 allLagsOutput_DF.y_lag0 *= pixelWidth
                 self.msds.append(results)
                 self.ids.append(particle)
-            results = stat.pandas_concat(self.msds, keys=self.ids)
+            results = stat_MSD.pandas_concat(self, self.msds, keys=self.ids)
             results = results.swaplevel(0, 1)[statistic].unstack()
             lagt = results.index.values.astype("float64") / float(frameTime)
             results.set_index(lagt, inplace=True)
@@ -263,12 +264,18 @@ class stat_MSD(object):
             return results, allLagsOutput_DF
         else:
             for particle, track in self.tracks.groupby("particle"):
-                msdNan_results, allLags_DF = stat.msdNan(
-                    track, pixelWidth, frameTime, max_lagtime, pos_columns, detail=True
+                msdNan_results, allLags_DF = stat_MSD.msdNan(
+                    self,
+                    track,
+                    pixelWidth,
+                    frameTime,
+                    max_lagtime,
+                    pos_columns,
+                    detail=True,
                 )
                 self.msds.append(msdNan_results)
                 self.ids.append(particle)
-            results = stat.pandas_concat(self.msds, keys=self.ids)
+            results = stat_MSD.pandas_concat(self, self.msds, keys=self.ids)
             results = results.swaplevel(0, 1)[statistic].unstack()
             lagt = results.index.values.astype("float64") / float(frameTime)
             results.set_index(lagt, inplace=True)
@@ -289,14 +296,13 @@ class stat_MSD(object):
         ids = []
         msds = []
         self.tracks = tracks
-        print(tracks)
         for particle, track in self.tracks.reset_index(drop=True).groupby("particle"):
-            msdNan_results, allLags_DF = stat.msdNan(
-                track, pixelWidth, frameTime, max_lagtime, pos_columns
+            msdNan_results, allLags_DF = stat_MSD.msdNan(
+                self, track, pixelWidth, frameTime, max_lagtime, pos_columns
             )
             msds.append(msdNan_results)
             ids.append(particle)
-        msds = stat.pandas_concat(msds, keys=ids, names=["particle", "frame"])
+        msds = stat_MSD.pandas_concat(self, msds, keys=ids, names=["particle", "frame"])
         results = msds.mul(msds["N"], axis=0).mean(level=1)
         results = results.div(msds["N"].mean(level=1), axis=0)
         results_stdev = msds.mul(msds["N"], axis=0).std(level=1)
@@ -433,7 +439,7 @@ class plot_MSD(object):
         self.line = pd.DataFrame({"lagt": self.msds_vals["lagt"], "Avg_EAMSD": y_fit})
         return self.line, self.slope, self.intercept
 
-    def plot_EAMSD(self, ensa_msds, fit_range):
+    def plot_EAMSD(self, ensa_msds, fit_range, mobile=False):
         self.ensa_msds = ensa_msds
         self.fit_range = fit_range
         # Plot results as half the track lengths by modifiying plotting window
@@ -471,7 +477,10 @@ class plot_MSD(object):
         # Set the legend
         ax.legend(loc="upper left", fontsize=12)
         # Set the headline/title for the plot
-        fig.suptitle("Ensemble-Averaged MSD with a Linear Fit", fontsize=20)
+        if mobile:
+            fig.suptitle("Mobile Ensemble-Averaged MSD with a Linear Fit", fontsize=20)
+        else:
+            fig.suptitle("Ensemble-Averaged MSD with a Linear Fit", fontsize=20)
         # Set the axes labels
         ax.set_ylabel(
             r"$\langle$$\bf{r}$$^2$($\Delta)\rangle$ [$\mu$m$^2$]", fontsize=15
@@ -499,6 +508,7 @@ class plot_MSD(object):
         ax.set(ylim=(self.y_min, self.y_max), xlim=(self.x_min, self.x_max))
         # Display the EAMSD plot
         plt.show()
+        return
 
 
 if __name__ == "__main__":
