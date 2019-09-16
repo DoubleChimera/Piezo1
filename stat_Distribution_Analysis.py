@@ -1,4 +1,31 @@
+import codecs
+import json
+
+# import os.path
+import numpy as np
 import pandas as pd
+
+
+class json_converter(object):
+    def json_SelectedTracks_to_DF(self, file_path):
+        self.objLoad = codecs.open(file_path, "r", encoding="utf-8").read()
+        self.lstnan = np.array(json.loads(self.objLoad))
+        self.arrNan = np.array([np.array(track) for track in self.lstnan])
+        lst_part, lst_frame, lst_x, lst_y = ([] for i in range(4))
+        for particle, track in enumerate(self.arrNan):
+            lst_part.extend([particle] * len(track))
+            lst_frame.extend(np.ndarray.tolist(track[:, 0]))
+            lst_x.extend(np.ndarray.tolist(track[:, 1]))
+            lst_y.extend(np.ndarray.tolist(track[:, 2]))
+        self.tracks_df = pd.DataFrame(
+            {"particle": lst_part, "frame": lst_frame, "x": lst_x, "y": lst_y}
+        )
+        return self.tracks_df
+
+    def load_MobileTrapped_json(self, jsonFilePath):
+        with open(jsonFilePath) as json_file:
+            jdata = json.load(json_file)
+        return jdata
 
 
 def loadMobileTracksDF(selectedTracks_DF, mobileTrack_List, savePath):
@@ -17,8 +44,6 @@ if __name__ == "__main__":
     jsonSelectedTracksLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
     # TAMSD of ALL Tracks DF (Trapped and Mobile)
     jsonTAMSDLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/TAMSD.json"
-    # EAMSD of ALL Tracks DF (Trapped and Mobile)
-    jsonEAMSDLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/EAMSD.json"
     # Dict -List of Mobile and Trapped Tracks
     jsonMobileTrappedDictPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/Mobile_Trapped_tracks.json"
     # ALL Tracks ALL Lags DF (Trapped and Mobile)
@@ -46,6 +71,20 @@ if __name__ == "__main__":
     # * -----END OF USER INPUTS----- * #
 
     # * ----- START SUBROUTINE ----- * #
+    # Convert frameTime to frames-per-second
+    frameTime = 1000 / frameTime
+
+    # Instantiate the json_converter class
+    jc = json_converter()
+
+    # Load tracks data into a pandas DataFrame
+    selectedTracks_DF = jc.json_SelectedTracks_to_DF(jsonSelectedTracksLoadPath)
+    TAMSD_DF = pd.read_json(jsonTAMSDLoadPath, orient="split")
+    AllTracksLags_DF = pd.read_json(jsonAllTracksAllLags, orient="split")
+    MobileTrappedTracks_Dict = jc.load_MobileTrapped_json(jsonMobileTrappedDictPath)
+
+    # Setup the index for TAMSD
+    TAMSD_DF.set_index("lagt", inplace=True)
 
     # * -----  END SUBROUTINE  ----- * #
 
