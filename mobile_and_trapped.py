@@ -1,11 +1,12 @@
 import codecs
 import json
-import os.path
 import math
+import os.path
+from collections import OrderedDict
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from collections import OrderedDict
 
 import stat_MSD_outputs
 
