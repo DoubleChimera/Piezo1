@@ -1,7 +1,9 @@
 import codecs
 import json
+import math
 
 # import os.path
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -29,11 +31,61 @@ class json_converter(object):
 
 
 def loadMobileTracksDF(selectedTracks_DF, mobileTrack_List, savePath):
-    mobileTrack_DF = pd.DataFrame()
+    mobileTracks_DF = pd.DataFrame()
     for particle, track in selectedTracks_DF.reset_index(drop=True).groupby("particle"):
         if particle in mobileTrack_List:
-            mobileTrack_DF = mobileTrack_DF.append(track, ignore_index=True)
-    return mobileTrack_DF
+            mobileTracks_DF = mobileTracks_DF.append(track, ignore_index=True)
+    return mobileTracks_DF
+
+
+def alphaValAnalysis(TAMSD_DF, mobileTracks_List, cutoffPercentLength, binWidth=0.05):
+    # Use the mobileTracks_List to make a DF of mobile TAMSD
+    mobileTAMSDTracks_DF = TAMSD_DF.loc[:, mobileTracks_List]
+    # Insert the 'lagt' column into the mobileTAMSD DF
+    mobileTAMSDTracks_DF.insert(0, "lagt", TAMSD_DF["lagt"], True)
+    # Setup a new DF to store the alpha values into
+    alphaVals_DF = pd.DataFrame(columns=["particle", "alpha_vals"])
+    alphaVals_DF["particle"] = list(mobileTAMSDTracks_DF.set_index("lagt"))
+    # Re-index alphaVals_DF to particle in prep for iteration
+    alphaVals_DF.set_index("particle", inplace=True)
+    # Go over all particles/tracks and determine alpha vals, insert into alphaVals_DF
+    for particle in mobileTAMSDTracks_DF.set_index("lagt"):
+        # Determine cutoffPercentLength of track
+        cutoffLength = int(
+            math.floor(
+                mobileTAMSDTracks_DF[particle].count() * (cutoffPercentLength / 100)
+            )
+        )
+        # Perform a linear fit for only these points
+        cutoffSlope, cutoffIntercept = np.polyfit(
+            np.log(mobileTAMSDTracks_DF["lagt"].iloc[0:cutoffLength]),
+            np.log(mobileTAMSDTracks_DF[particle].iloc[0:cutoffLength]),
+            1,
+        )
+        alphaVals_DF.loc[particle] = cutoffSlope
+    # Calc the mean alpha val and print it to console
+    meanAlphaVal = alphaVals_DF.mean(axis=0)
+    print(f"Mean {meanAlphaVal}")
+    # Make a histogram of probabilities out of the alpha values
+    # --Setup the plot
+    fig, ax = plt.subplots(figsize=(10, 5))
+    # --Setup the bin width ranges
+    alphaMaxBin = math.ceil(alphaVals_DF["alpha_vals"].max() * 20) / 20
+    alphaHistBinRange = np.arange(0, alphaMaxBin + binWidth, binWidth)
+    # --Draw the plot
+    ax.hist(
+        list(alphaVals_DF["alpha_vals"]),
+        bins=alphaHistBinRange,
+        color="gray",
+        alpha=0.7,
+        edgecolor="black",
+    )
+    # --Title and labels
+    ax.set_title("Alpha Value Distributions")
+    ax.set_xlabel("Alpha Values")
+    ax.set_ylabel("Probability")
+    # --Show the plot
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -83,11 +135,18 @@ if __name__ == "__main__":
     AllTracksLags_DF = pd.read_json(jsonAllTracksAllLags, orient="split")
     MobileTrappedTracks_Dict = jc.load_MobileTrapped_json(jsonMobileTrappedDictPath)
 
-    # Setup the index for TAMSD
-    TAMSD_DF.set_index("lagt", inplace=True)
+    # Histogram the alpha values for the TAMSD of Mobile Tracks up to a cutoff percentage
+    alphaValAnalysis(TAMSD_DF, MobileTrappedTracks_Dict["Mobile"], 10)
 
     # * -----  END SUBROUTINE  ----- * #
 
     # ! ----- START DEBUGGING  ----- ! #
+
+    # Use the mobileTracks_List to make a DF of mobile TAMSD
+    mobileTAMSDTracks_DF = TAMSD_DF.loc[:, MobileTrappedTracks_Dict["Mobile"]]
+    # Insert the 'lagt' column into the mobileTAMSD DF
+    mobileTAMSDTracks_DF.insert(0, "lagt", TAMSD_DF["lagt"], True)
+    # Print the mobile TAMSD DF
+    print(mobileTAMSDTracks_DF)
 
     # ! -----  END DEBUGGING   ----- ! #

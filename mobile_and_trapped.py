@@ -161,7 +161,7 @@ def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List, frameTime, fit_range):
     lagt = np.round(lagt, 1)
     TAMSD_DF.set_index(lagt, inplace=True)
     TAMSD_DF.index.name = "lagt"
-    # Setup a trappedTrack dataframe
+    # Setup a mobileTrack dataframe
     mobileTAMSDTracks_DF = TAMSD_DF.loc[:, mobileTracks_List]
     # get half the track lengths
     mobileTAMSD_range = int(math.floor(mobileTAMSDTracks_DF.count().max() / 2))
@@ -562,23 +562,6 @@ if __name__ == "__main__":
 
     # ! -----DEBUGGING CODE START----- ! #
 
-    # TODO After this point you will begin histogramming alpha values from the TAMSD ...
-
     # ! -----DEBUGGING CODE   END----- ! #
 
-
 # --------------------------------------------------------------------------------------------------
-# // TODO 1.0   Load a .json of all tracks
-# // TODO 2.0   Use selection criterion to differentiate mobile and trapped tracks
-# // TODO 3.0   Plot Mobile and Trapped Tracks with output to file option
-# // TODO 4.0   TAMSD of mobile tracks
-# // TODO 4.1   --Power Law fit
-# // TODO 4.2   --Linear Fit
-# // TODO 5.0   EAMSD of mobile tracks
-# // TODO 5.1   --Power Law fit
-# // TODO 5.2   --Linear Fit
-# // TODO 6.0   TAMSD and EAMSD mobile tracks, both on same plot
-# // TODO 6.1   --Linear Fit
-# // TODO 6.2   --Linear Fit on Log Data
-# // TODO 7.0   Plot any individual mobile or trapped track to visualize its path
-# TODO 8.0   Distribution of alpha values TAMSD for upto 10% trajectory time

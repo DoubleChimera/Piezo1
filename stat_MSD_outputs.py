@@ -306,8 +306,8 @@ class stat_MSD(object):
         msds = stat_MSD.pandas_concat(self, msds, keys=ids, names=["particle", "frame"])
         results = msds.mul(msds["N"], axis=0).mean(level=1)
         results = results.div(msds["N"].mean(level=1), axis=0)
-        results_stdev = msds.mul(msds["N"], axis=0).std(level=1)
-        results_stdev = results.div(msds["N"].mean(level=1), axis=0)
+        results_stdev = msds.mul(msds["N"], axis=0).mean(level=1)
+        results_stdev = results.div(msds["N"].std(level=1), axis=0)
         results.insert(7, "StdDev", results_stdev["msd"])
         if not detail:
             return results.set_index("lagt")["msd"]
@@ -321,13 +321,15 @@ class plot_MSD(object):
         self.msds_vals = msds
         self.msds_vals = self.msds_vals.reset_index(name="Avg_TAMSD")
         self.slope, self.intercept = np.polyfit(
-            np.log(self.msds_vals["lagt"][self.fit_range[0] : self.fit_range[1]]),
-            np.log(self.msds_vals["Avg_TAMSD"][self.fit_range[0] : self.fit_range[1]]),
+            np.log(self.msds_vals["lagt"].iloc[self.fit_range[0] : self.fit_range[1]]),
+            np.log(
+                self.msds_vals["Avg_TAMSD"].iloc[self.fit_range[0] : self.fit_range[1]]
+            ),
             1,
         )
         y_fit = np.exp(
             self.slope
-            * np.log(self.msds_vals["lagt"][self.fit_range[0] : self.fit_range[1]])
+            * np.log(self.msds_vals["lagt"].iloc[self.fit_range[0] : self.fit_range[1]])
             + self.intercept
         )
         self.line = pd.DataFrame({"lagt": self.msds_vals["lagt"], "Avg_TAMSD": y_fit})
@@ -428,13 +430,13 @@ class plot_MSD(object):
         self.fit_range = fit_range
         self.msds_vals = msds
         self.slope, self.intercept = np.polyfit(
-            np.log(self.msds_vals["lagt"][self.fit_range[0] : self.fit_range[1]]),
-            np.log(self.msds_vals["msd"][self.fit_range[0] : self.fit_range[1]]),
+            np.log(self.msds_vals["lagt"].iloc[self.fit_range[0] : self.fit_range[1]]),
+            np.log(self.msds_vals["msd"].iloc[self.fit_range[0] : self.fit_range[1]]),
             1,
         )
         y_fit = np.exp(
             self.slope
-            * np.log(self.msds_vals["lagt"][self.fit_range[0] : self.fit_range[1]])
+            * np.log(self.msds_vals["lagt"].iloc[self.fit_range[0] : self.fit_range[1]])
             + self.intercept
         )
         self.line = pd.DataFrame({"lagt": self.msds_vals["lagt"], "Avg_EAMSD": y_fit})
