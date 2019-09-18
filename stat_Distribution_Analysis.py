@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
     # Local Error (determines mobile vs. trapped tracks) in um^2
     # Calculation of localization error is normally distributed with a stdev 12.7nm
-    # or (0.117 pixels) in each direction
+    # or (0.127 pixels) in each direction
     # Sqrt[2 * (12.7 ** 2) ] = 0.018
     # Try defining mobile tracks as those with taMSD(1 sec) > 0.018 um^2
     localError = 0.018
