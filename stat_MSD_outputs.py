@@ -225,7 +225,7 @@ class stat_MSD(object):
                 range(self.tracks.groupby("particle").count().max()[0])
             )
             # Inserts lagtimes into Dataframe
-            allLagsOutput_DF.insert(2, "lagt", (self.tracks["frame"] * self.frameTime))
+            allLagsOutput_DF.insert(2, "lagt", (self.tracks["frame"] / self.frameTime))
             self.lag_columns = ["_lag{}".format(l) for l in self.maxLagTime]
             self.lag_results = list(
                 stat_MSD.genLagColumns(self, self.lag_columns, self.pos_columns)
@@ -536,7 +536,7 @@ if __name__ == "__main__":
     # Boolean to toggle calculating and outputting all displacements for all particles at all lag times
     # ! Warning -- Very time intensive
     # ! Can take upwards of an hour with enough points to aggregate
-    generate_All_Lag_Outputs = False
+    generate_All_Lag_Outputs = True
 
     # * ---------- * END OF USER INPUTS * ---------- * #
 
