@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import stat_MSD_outputs as statMSDo
+from scipy.optimize import curve_fit
 
 
 class json_converter(object):
@@ -84,7 +85,7 @@ def alphaValAnalysis(TAMSD_DF, mobileTracks_List, cutoffPercentLength, binWidth=
     # --Title and labels
     ax.set_title("Alpha Value Distributions")
     ax.set_xlabel("Alpha Values")
-    ax.set_ylabel("Probability")
+    ax.set_ylabel("Count")
     # --Show the plot
     plt.show()
 
@@ -120,7 +121,8 @@ if __name__ == "__main__":
     localErrorLagTime = 1.0
 
     # Range of data to fit to a line
-    fit_range = [1, 30]  # bounding indices for tracks to fit, select linear region
+    # bounding indices for tracks to fit, select linear region
+    fit_range = [1, 30]
     # * -----END OF USER INPUTS----- * #
 
     # * ----- START SUBROUTINE ----- * #
@@ -143,6 +145,12 @@ if __name__ == "__main__":
 
     # ! ----- START DEBUGGING  ----- ! #
     # Cumulative Distributon Function, lagtime_limit is in number of frames and inclusive
+
+    def func_cdfONEmob(x, d):
+        return 1 - np.exp(-(x / d))
+
+    # ! THIS LAGTIME LIMIT SHOULD ALSO DEFINE the AllLagsAllTracks_DF such that there are only this many values
+    # ! More values or all values results in  a memory error.  Likely you will only need up to 20 lagtime, at most
     def cumulDistrib(
         AllTracksAllLags_DF,
         MobileTracks_List,
@@ -225,9 +233,26 @@ if __name__ == "__main__":
             )
             print(plotCDF_DF)
             # Plot the two columns with r2 as 'x' and CDF as 'y'
-            plt.step(plotCDF_DF[f"r2_lag{plotNum}"], plotCDF_DF[f"CDF_lag{plotNum}"])
-            # ! Need to pretty up this plot with nice formatting
+            # Gather the x y data
+            CDF_x_data = plotCDF_DF[f"r2_lag{plotNum}"]
+            CDF_y_data = plotCDF_DF[f"CDF_lag{plotNum}"]
+            # Generate fitted curve
+            popt, pcov = curve_fit(func_cdfONEmob, CDF_x_data, CDF_y_data)
+            residuals = CDF_y_data - func_cdfONEmob(CDF_x_data, popt)
+            print(residuals)
+            # Setup the new figure for CDF plots
+            # CDF_fig = plt.figure()
+            # Plot fitted curve
+            plt.plot(
+                CDF_x_data, func_cdfONEmob(CDF_x_data, *popt), label="Fitted Curve"
+            )
+            # Plot original data
+            plt.step(CDF_x_data, CDF_y_data, label="Original Data")
+            # Set location of legend on plot
+            plt.legend(loc="upper left")
+            # Show the plot
             plt.show()
+            # ! NEED TO ADD LABELS THAT INDICATE WHICH LAGTIME IS BEING PLOTTED
 
     cumulDistrib(AllTracksAllLags_DF, MobileTrappedTracks_Dict["Mobile"], frameTime)
     # ! -----  END DEBUGGING   ----- ! #

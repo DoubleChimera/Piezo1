@@ -304,9 +304,9 @@ class stat_MSD(object):
             msds.append(msdNan_results)
             ids.append(particle)
         msds = stat_MSD.pandas_concat(self, msds, keys=ids, names=["particle", "frame"])
-        results = msds.mul(msds["N"], axis=0).mean(level=1)
-        results = results.div(msds["N"].mean(level=1), axis=0)
-        results_stdev = msds.mul(msds["N"], axis=0).mean(level=1)
+        results = msds.mul(msds["N"], axis=0).mean(skipna=True, level=1)
+        results = results.div(msds["N"].mean(skipna=True, level=1), axis=0)
+        results_stdev = msds.mul(msds["N"], axis=0).mean(skipna=True, level=1)
         results_stdev = results.div(msds["N"].std(level=1), axis=0)
         results.insert(7, "StdDev", results_stdev["msd"])
         if not detail:
@@ -353,7 +353,7 @@ class plot_MSD(object):
             )
 
         # Average track of all tracks
-        self.avg_half_msd = self.half_indiv_msds.mean(axis=1)
+        self.avg_half_msd = self.half_indiv_msds.mean(skipna=True, axis=1)
 
         # plot results as half track lengths
         fig, ax = plt.subplots(figsize=(10, 5))
@@ -519,10 +519,10 @@ if __name__ == "__main__":
     # * ---------- * USER INPUTS BELOW * ---------- * #
 
     # Path to load selected_track_list.json from track_selector.py
-    jsonTracksLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
+    jsonTracksLoadPath = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/Timing_test_outputs/Selected_tracks/selected_track_list.json"
 
     # Save path to output generated files
-    savePath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs"
+    savePath = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/Timing_test_outputs"
 
     # Width of pixel in microns, typical value is 0.1092
     pixelWidth = 0.1092  # in microns
@@ -531,12 +531,13 @@ if __name__ == "__main__":
     frameTime = 100  # in milliseconds
 
     # Range of x-values to which we apply the fitting parameters
-    fit_range = [1, 30]  # bounding indices for linear fit
+    fit_range = [1, 25]  # bounding indices for linear fit
 
     # Boolean to toggle calculating and outputting all displacements for all particles at all lag times
     # ! Warning -- Very time intensive
     # ! Can take upwards of an hour with enough points to aggregate
-    generate_All_Lag_Outputs = True
+    # ! REDESIGN THIS FUNCTION TO ONLY PRODUCE THE FIRST X Lagtimes, you dont need them all.....
+    generate_All_Lag_Outputs = False
 
     # * ---------- * END OF USER INPUTS * ---------- * #
 

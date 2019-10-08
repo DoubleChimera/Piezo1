@@ -7,7 +7,6 @@ from collections import OrderedDict
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
 import stat_MSD_outputs
 
 
@@ -376,7 +375,7 @@ def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List, frameTime, fit_range):
     return mobileTAMSDBestFit_DF
 
     # ---------------------------------------------------------------------------
-    # Plot the EAMSD Averaged Track with fit and # ! error cloud
+    # Plot the EAMSD Averaged Track with fit and # ! std error cloud
     # ---------------------------------------------------------------------------
 
 
@@ -470,18 +469,19 @@ if __name__ == "__main__":
     # * -----USER INPUTS BELOW----- * #
     # Paths to MSD .json files to load as dataframes
     # Selected Tracks DF
-    jsonSelectedTracksLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
+    jsonSelectedTracksLoadPath = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/Timing_test_outputs/Selected_tracks/selected_track_list.json"
     # TAMSD of ALL Tracks DF (Trapped and Mobile)
-    jsonTAMSDLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/TAMSD.json"
+    jsonTAMSDLoadPath = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/Timing_test_outputs/Statistics/MSDs/TAMSD.json"
     # EAMSD of ALL Tracks DF (Trapped and Mobile)
-    jsonEAMSDLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/EAMSD.json"
+    jsonEAMSDLoadPath = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/Timing_test_outputs/Statistics/MSDs/EAMSD.json"
     # Dict -List of Mobile and Trapped Tracks
-    jsonMobileTrappedDictPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/Mobile_Trapped_tracks.json"
+    jsonMobileTrappedDictPath = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/Timing_test_outputs/Statistics/MSDs/Mobile_Trapped_tracks.json"
     # ALL Tracks ALL Lags DF (Trapped and Mobile)
-    jsonAllTracksAllLags = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/All_Lagtimes.json"
+    # ! Commented out for now
+    # jsonAllTracksAllLags = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/Timing_test_outputs/Statistics/MSDs/All_Lagtimes.json"
 
     # Path to main directory for saving outputs
-    savePath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs"
+    savePath = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/Timing_test_outputs"
 
     # Experimental parameters
     pixelWidth = 0.1092  # in microns
@@ -499,7 +499,7 @@ if __name__ == "__main__":
     localErrorLagTime = 1.0
 
     # Range of data to fit to a line
-    fit_range = [1, 30]  # bounding indices for tracks to fit, select linear region
+    fit_range = [1, 25]  # bounding indices for tracks to fit, select linear region
     # * -----END OF USER INPUTS----- * #
 
     # * -----START SUBROUTINE----- * #
@@ -513,7 +513,8 @@ if __name__ == "__main__":
     selectedTracks_DF = jc.json_SelectedTracks_to_DF(jsonSelectedTracksLoadPath)
     TAMSD_DF = pd.read_json(jsonTAMSDLoadPath, orient="split")
     EAMSD_DF = pd.read_json(jsonEAMSDLoadPath, orient="split")
-    AllTracksLags_DF = pd.read_json(jsonAllTracksAllLags, orient="split")
+    # ! Commented out for now
+    # AllTracksLags_DF = pd.read_json(jsonAllTracksAllLags, orient="split")
 
     # Setup the index for TAMSD
     TAMSD_DF.set_index("lagt", inplace=True)
