@@ -1,10 +1,61 @@
 {
+    "telemetry.enableCrashReporter": false,
+    "telemetry.enableTelemetry": false,
     "python.pythonPath": "/home/vivek/anaconda3/envs/rmsd/bin/python",
-    "python.linting.pep8Enabled": false,
-    "python.linting.pep8Args": ["--max-line-length=125" ],
-    "python.linting.pylintEnabled": false,
-    "python.linting.flake8Enabled": true,
-    "python.linting.flake8Args": ["--max-line-length=125",
-                                  "--ignore:E501,E203,W503" ],
-    "python.linting.enabled": true
+    "code-runner.executorMap.python": "/home/vivek/anaconda3/envs/rmsd/bin/python3 -u",
+    "workbench.colorTheme": "Night Owl Black",
+    "git.autofetch": true,
+    "terminal.integrated.fontFamily": "Dank Mono",
+    "bracketPairColorizer.forceUniqueOpeningColor": true,
+    "better-comments.multilineComments": true,
+    "better-comments.highlightPlainText": false,
+    "better-comments.tags": [
+        {
+          "tag": "!",
+          "color": "#FF2D00",
+          "strikethrough": false,
+          "backgroundColor": "transparent"
+        },
+        {
+          "tag": "?",
+          "color": "#3498DB",
+          "strikethrough": false,
+          "backgroundColor": "transparent"
+        },
+        {
+          "tag": "//",
+          "color": "#474747",
+          "strikethrough": true,
+          "backgroundColor": "transparent"
+        },
+        {
+          "tag": "todo",
+          "color": "#FF8C00",
+          "strikethrough": false,
+          "backgroundColor": "transparent"
+        },
+        {
+          "tag": "*",
+          "color": "#98C379",
+          "strikethrough": false,
+          "backgroundColor": "transparent"
+        }
+      ],
+      "editor.fontLigatures": true,
+      "editor.fontFamily": "Hack",
+      "git.enableSmartCommit": true,
+      "window.zoomLevel": 0,
+      "editor.suggestSelection": "first",
+      "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
+      "python.jediEnabled": false,
+      "python.linting.enabled": true,
+      "python.linting.flake8Args": ["--ignore=E501,W503,E203",
+                                    "--max-line-length=120",
+                                    "--max-complexity=18",
+                                    "--select=B,C,E,F,W,T4,B9"
+                                  ],
+                                  "diffEditor.ignoreTrimWhitespace": true,
+                                  "sync.gist": "9696b70ea55277eca9c158dea21f6956",
+                                  "workbench.iconTheme": "vscode-icons",
+                                  "terminal.integrated.inheritEnv": false
 }

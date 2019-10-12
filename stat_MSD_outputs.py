@@ -15,7 +15,6 @@ class json_converter(object):
         self.objLoad = codecs.open(file_path, "r", encoding="utf-8").read()
         self.lstnan = np.array(json.loads(self.objLoad))
         self.arrNan = np.array([np.array(track) for track in self.lstnan])
-
         lst_part, lst_frame, lst_x, lst_y = ([] for i in range(4))
         for particle, track in enumerate(self.arrNan):
             lst_part.extend([particle] * len(track))
@@ -180,7 +179,6 @@ class stat_MSD(object):
         results, allLags_DF = stat_MSD.msd_iter(
             self, self.pos.values, lagtimes, result_columns, genAllLagsOutput
         )
-
         results["msd"] = results[result_columns[-len(pos_columns) :]].sum(1)
         if detail:
             # effective number of measurements
@@ -281,14 +279,14 @@ class stat_MSD(object):
             lagt = results.index.values.astype("float64") / float(frameTime)
             results.set_index(lagt, inplace=True)
             results.index.name = "lagt"
-        return results, allLagsOutput_DF
+            return results, allLagsOutput_DF
 
     def ensa_msd(
         self,
         tracks,
         pixelWidth,
         frameTime,
-        max_lagtime=1000,
+        max_lagtime=10000,
         detail=True,
         pos_columns=None,
     ):
@@ -297,21 +295,52 @@ class stat_MSD(object):
         ids = []
         msds = []
         self.tracks = tracks
+        # ! For a set of tracks, square the displacements from the starting position and then take the mean over all the tracks
+        # Set pos_columns if they don't exist
+        if pos_columns is None:
+            pos_columns = ["x", "y"]
+        # Generate results columns from pos_columns (x^2 and y^2)
+        result_columns = ["<{}^2>".format(p) for p in pos_columns]
+        # Iterate over each track, subtracting the 0th
+        particle_index = 0
         for particle, track in self.tracks.reset_index(drop=True).groupby("particle"):
-            msdNan_results, allLags_DF = stat_MSD.msdNan(
-                self, track, pixelWidth, frameTime, max_lagtime, pos_columns
+            try:
+                pos = track.set_index("frame")[pos_columns] * pixelWidth
+                pos = pos.reindex(np.arange(pos.index[0], 1 + pos.index[-1]))
+            except ValueError:
+                if track["frame"].nunique() != len(self.track["frame"]):
+                    raise Exception(
+                        "Cannot use msdNan, more than one trajectory per particle found."
+                    )
+                else:
+                    raise
+            # This subtracts the first element from all the rows in that particle track
+            msds.append(pos - pos.loc[0.0].values.squeeze())
+            # Next we need to calculate x^2 and y^2
+            msds[particle_index][result_columns] = (
+                msds[particle_index].loc[:, "x":"y"] ** 2
             )
-            msds.append(msdNan_results)
+            # Then we need to add up all the rows of x^2 and y^2 with the same frame times
+            msds[particle_index]["eamsd"] = msds[particle_index][result_columns].sum(
+                axis=1, skipna=True
+            )
+            # Generate the particle list which will serve as an index for the dataframe
             ids.append(particle)
+            particle_index += 1
+        # Produce a dataframe from the generated lists
         msds = stat_MSD.pandas_concat(self, msds, keys=ids, names=["particle", "frame"])
-        results = msds.mul(msds["N"], axis=0).mean(skipna=True, level=1)
-        results = results.div(msds["N"].mean(skipna=True, level=1), axis=0)
-        results_stdev = msds.mul(msds["N"], axis=0).mean(skipna=True, level=1)
-        results_stdev = results.div(msds["N"].std(level=1), axis=0)
-        results.insert(7, "StdDev", results_stdev["msd"])
+        # Determine the stderr first, so its not lost in the overwritten dataframe during mean operation
+        msdStdErr = msds.sem(level=1, skipna=True)
+        # Take the mean across the rows, via the column axis while ignoring NaN values
+        results = msds.mean(level=1, skipna=True)
+        # Add the previously calculated standard error column
+        results["stdErr"] = msdStdErr.loc[:, "eamsd"]
+        results.insert(0, "lagt", results.reset_index()["frame"] / frameTime)
         if not detail:
-            return results.set_index("lagt")["msd"]
-        results["N"] = msds["N"].sum(level=1)
+            return results.set_index("lagt")["eamsd"]
+        # Print statement below to verify output of ensa_msd subroutine
+        # with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+        #     print(results)
         return results
 
 
@@ -342,7 +371,7 @@ class plot_MSD(object):
         self.frameTime = frameTime
         # get half the track lengths
         self.indiv_msds_range = int(math.floor(self.indiv_msds.count().max() / 2))
-        self.half_indices = self.indiv_msds.index[0 : self.indiv_msds_range]
+        self.half_indices = self.indiv_msds.index[0 : self.indiv_msds_range + 1]
         self.half_indiv_msds = pd.DataFrame(index=self.half_indices)
         for track in self.indiv_msds:
             half_last_index = round(
@@ -428,10 +457,12 @@ class plot_MSD(object):
 
     def plot_EAMSD_bestFit(self, msds, fit_range):
         self.fit_range = fit_range
-        self.msds_vals = msds
+        self.msds_vals = msds.reset_index()
+        # Add 1 to the fit_range values to stay consistent with TAMSD
+        self.fit_range = [range_val + 1 for range_val in self.fit_range]
         self.slope, self.intercept = np.polyfit(
             np.log(self.msds_vals["lagt"].iloc[self.fit_range[0] : self.fit_range[1]]),
-            np.log(self.msds_vals["msd"].iloc[self.fit_range[0] : self.fit_range[1]]),
+            np.log(self.msds_vals["eamsd"].iloc[self.fit_range[0] : self.fit_range[1]]),
             1,
         )
         y_fit = np.exp(
@@ -442,15 +473,21 @@ class plot_MSD(object):
         self.line = pd.DataFrame({"lagt": self.msds_vals["lagt"], "Avg_EAMSD": y_fit})
         return self.line, self.slope, self.intercept
 
-    def plot_EAMSD(self, ensa_msds, fit_range, mobile=False):
-        self.ensa_msds = ensa_msds
-        self.fit_range = fit_range
-        # Plot results as half the track lengths by modifiying plotting window
+    def plot_EAMSD(self, ensa_msds, fit_range, frameTime, mobile=False):
+        self.ensa_msds = ensa_msds.reset_index(drop=True).set_index("lagt")
+        self.fit_range = [range_val + 1 for range_val in fit_range]
+        # get half the track lengths
+        self.ensa_msds_range = int(math.floor(self.ensa_msds.count().max() / 2))
+        self.half_indices = self.ensa_msds.index[0 : self.ensa_msds_range + 1]
+        self.half_ensa_msds = pd.DataFrame(index=self.half_indices[1:])
+
         fig, ax = plt.subplots(figsize=(10, 5))
         # Plot EAMSD of tracks
         ax.plot(
-            self.ensa_msds["lagt"],
-            self.ensa_msds["msd"],
+            self.half_ensa_msds.index,
+            self.ensa_msds["eamsd"].loc[
+                self.half_ensa_msds.index[0] : self.half_ensa_msds.index[-1]
+            ],
             "o",
             label="Ensemble Average MSD",
         )
@@ -495,17 +532,23 @@ class plot_MSD(object):
         # Padding value to increase axes by
         axes_padding = 0.1
         # Calculate min/max values for axes
-        self.x_min = self.ensa_msds["lagt"].min() - (
-            self.ensa_msds["lagt"].min() * axes_padding
+        self.x_min = self.half_ensa_msds.index.min() - (
+            self.half_ensa_msds.index.min() * axes_padding
         )
-        self.x_max = self.ensa_msds["lagt"].max() + (
-            self.ensa_msds["lagt"].max() * axes_padding
+        # Check that the x_min values are not less than zero
+        if self.x_min <= 0:
+            self.x_min = axes_padding - (axes_padding ** 2)
+        self.x_max = self.half_ensa_msds.index.max() + (
+            self.half_ensa_msds.index.max() * axes_padding
         )
-        self.y_min = self.ensa_msds["msd"].min() - (
-            self.ensa_msds["msd"].min() * axes_padding
+        self.y_min = self.ensa_msds["eamsd"].iloc[1:].min() - (
+            self.ensa_msds["eamsd"].iloc[1:].min() * axes_padding
         )
-        self.y_max = self.ensa_msds["msd"].max() + (
-            self.ensa_msds["msd"].max() * axes_padding
+        # Check that the y_min values are not less than zero
+        if self.y_min < 0:
+            self.y_min = axes_padding
+        self.y_max = self.ensa_msds["eamsd"].iloc[1:].max() + (
+            self.ensa_msds["eamsd"].iloc[1:].max() * axes_padding
         )
         # Set the min/max values for x, y axes
         ax.set(ylim=(self.y_min, self.y_max), xlim=(self.x_min, self.x_max))
@@ -519,10 +562,10 @@ if __name__ == "__main__":
     # * ---------- * USER INPUTS BELOW * ---------- * #
 
     # Path to load selected_track_list.json from track_selector.py
-    jsonTracksLoadPath = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/Timing_test_outputs/Selected_tracks/selected_track_list.json"
+    jsonTracksLoadPath = r"/home/vivek/Desktop/Piezo1 Test Data/Python_outputs/Selected_tracks/selected_track_list.json"
 
     # Save path to output generated files
-    savePath = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/Timing_test_outputs"
+    savePath = r"/home/vivek/Desktop/Piezo1 Test Data/Python_outputs"
 
     # Width of pixel in microns, typical value is 0.1092
     pixelWidth = 0.1092  # in microns
@@ -531,7 +574,10 @@ if __name__ == "__main__":
     frameTime = 100  # in milliseconds
 
     # Range of x-values to which we apply the fitting parameters
-    fit_range = [1, 25]  # bounding indices for linear fit
+    fit_range = [
+        0,
+        10,
+    ]  # bounding indices for linear fit # ! FIX THIS FOR CASES WHERE ITS CHANGED
 
     # Boolean to toggle calculating and outputting all displacements for all particles at all lag times
     # ! Warning -- Very time intensive
@@ -584,7 +630,7 @@ if __name__ == "__main__":
     pMSD.plot_TAMSD(indiv_msds, ensa_msds, fit_range, frameTime)
 
     # Plot EAMSD
-    pMSD.plot_EAMSD(ensa_msds, fit_range)
+    pMSD.plot_EAMSD(ensa_msds, fit_range, frameTime)
 
     # * #################### CURRENT DEBUGGING CODE IS BELOW ####################
     # ! ####################   OLD DEBUGGING CODE IS BELOW   ####################

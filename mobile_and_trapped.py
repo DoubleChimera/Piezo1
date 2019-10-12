@@ -176,7 +176,7 @@ def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List, frameTime, fit_range):
 
     # Determine Average Track of all tracks
     avgMobileTAMSD_half_MSD = mobileTAMSD_half_MSDs.mean(axis=1)
-    avgStdMobileTAMSD_half_MSD = mobileTAMSD_half_MSDs.std(axis=1)
+    avgStdErrMobileTAMSD_half_MSD = mobileTAMSD_half_MSDs.sem(axis=1)
 
     # Plot results as half track lengths
     fig, ax = plt.subplots(1, 1, figsize=(10, 5))
@@ -316,8 +316,8 @@ def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List, frameTime, fit_range):
     )
     plt.fill_between(
         avgMobileTAMSD_half_MSD.index,
-        avgMobileTAMSD_half_MSD - avgStdMobileTAMSD_half_MSD,
-        avgMobileTAMSD_half_MSD + avgStdMobileTAMSD_half_MSD,
+        avgMobileTAMSD_half_MSD - avgStdErrMobileTAMSD_half_MSD,
+        avgMobileTAMSD_half_MSD + avgStdErrMobileTAMSD_half_MSD,
         alpha=0.2,
     )
     ax.plot(
@@ -368,14 +368,14 @@ def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List, frameTime, fit_range):
     mobileTAMSDBestFit_DF = pd.concat(
         [
             avgMobileTAMSD_half_MSD.rename("Avg_TAMSD"),
-            avgStdMobileTAMSD_half_MSD.rename("StdDev_TAMSD"),
+            avgStdErrMobileTAMSD_half_MSD.rename("stdErr_TAMSD"),
         ],
         axis=1,
     )
     return mobileTAMSDBestFit_DF
 
     # ---------------------------------------------------------------------------
-    # Plot the EAMSD Averaged Track with fit and # ! std error cloud
+    # Plot the EAMSD Averaged Track with fit and std error cloud
     # ---------------------------------------------------------------------------
 
 
@@ -392,7 +392,7 @@ def plot_MobileEAMSD(mobileTracks_DF, pixelWidth, frameTime, fit_range):
     mobileEAMSDTracks = stat.ensa_msd(
         mobileTracks_DF, pixelWidth, frameTime, max_lagtime=1000
     )
-    pMSD.plot_EAMSD(mobileEAMSDTracks, fit_range, mobile=True)
+    pMSD.plot_EAMSD(mobileEAMSDTracks, fit_range, frameTime, mobile=True)
     return mobileEAMSDTracks
 
 
@@ -411,25 +411,34 @@ def plot_AvgMobileTA_EA_MSD(
     )
     plt.fill_between(
         avgTAMSD_DF.index,
-        avgTAMSD_DF["Avg_TAMSD"] - avgTAMSD_DF["StdDev_TAMSD"],
-        avgTAMSD_DF["Avg_TAMSD"] + avgTAMSD_DF["StdDev_TAMSD"],
+        avgTAMSD_DF["Avg_TAMSD"] - avgTAMSD_DF["stdErr_TAMSD"],
+        avgTAMSD_DF["Avg_TAMSD"] + avgTAMSD_DF["stdErr_TAMSD"],
         alpha=0.2,
     )
-    # best fit line for TAMSD plotting would go here
+
+    # set index of EAMSD data to 'lagt'
+    mobileEAMSD_DF.set_index("lagt", drop=True, inplace=True)
+    # Adjust the indices for the EAMSD plots based on the TAMSD plots?
+    # Determine iloc of the TAMSD plotting limits
+    startPlotIndex = mobileEAMSD_DF.index.get_loc(avgTAMSD_DF.index[0])
+    endPlotIndex = mobileEAMSD_DF.index.get_loc(avgTAMSD_DF.index[-1]) + 1
 
     # Plot EAMSD, set label for legend
     ax.plot(
-        mobileEAMSD_DF["lagt"],
-        mobileEAMSD_DF["msd"],
+        mobileEAMSD_DF.index[startPlotIndex:endPlotIndex],
+        mobileEAMSD_DF["eamsd"].loc[avgTAMSD_DF.index[0] : avgTAMSD_DF.index[-1]],
         "r-",
         alpha=1,
         linewidth=3,
         label=r"$\langle$MSD$\rangle$$_{ens}$",
     )
+
     plt.fill_between(
-        mobileEAMSD_DF["lagt"],
-        mobileEAMSD_DF["msd"] - mobileEAMSD_DF["StdDev"],
-        mobileEAMSD_DF["msd"] + mobileEAMSD_DF["StdDev"],
+        mobileEAMSD_DF.index[startPlotIndex:endPlotIndex],
+        mobileEAMSD_DF["eamsd"].loc[avgTAMSD_DF.index[0] : avgTAMSD_DF.index[-1]]
+        - mobileEAMSD_DF["stdErr"].loc[avgTAMSD_DF.index[0] : avgTAMSD_DF.index[-1]],
+        mobileEAMSD_DF["eamsd"].loc[avgTAMSD_DF.index[0] : avgTAMSD_DF.index[-1]]
+        + mobileEAMSD_DF["stdErr"].loc[avgTAMSD_DF.index[0] : avgTAMSD_DF.index[-1]],
         alpha=0.2,
     )
 
@@ -469,19 +478,19 @@ if __name__ == "__main__":
     # * -----USER INPUTS BELOW----- * #
     # Paths to MSD .json files to load as dataframes
     # Selected Tracks DF
-    jsonSelectedTracksLoadPath = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/Timing_test_outputs/Selected_tracks/selected_track_list.json"
+    jsonSelectedTracksLoadPath = r"/home/vivek/Desktop/Piezo1 Test Data/Python_outputs/Selected_tracks/selected_track_list.json"
     # TAMSD of ALL Tracks DF (Trapped and Mobile)
-    jsonTAMSDLoadPath = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/Timing_test_outputs/Statistics/MSDs/TAMSD.json"
+    jsonTAMSDLoadPath = r"/home/vivek/Desktop/Piezo1 Test Data/Python_outputs/Statistics/MSDs/TAMSD.json"
     # EAMSD of ALL Tracks DF (Trapped and Mobile)
-    jsonEAMSDLoadPath = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/Timing_test_outputs/Statistics/MSDs/EAMSD.json"
+    jsonEAMSDLoadPath = r"/home/vivek/Desktop/Piezo1 Test Data/Python_outputs/Statistics/MSDs/EAMSD.json"
     # Dict -List of Mobile and Trapped Tracks
-    jsonMobileTrappedDictPath = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/Timing_test_outputs/Statistics/MSDs/Mobile_Trapped_tracks.json"
+    jsonMobileTrappedDictPath = r"/home/vivek/Desktop/Piezo1 Test Data/Python_outputs/Statistics/MSDs/Mobile_Trapped_tracks.json"
     # ALL Tracks ALL Lags DF (Trapped and Mobile)
     # ! Commented out for now
-    # jsonAllTracksAllLags = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/Timing_test_outputs/Statistics/MSDs/All_Lagtimes.json"
+    # jsonAllTracksAllLags = r"/home/vivek/Desktop/Piezo1 Test Data/Python_outputs/Statistics/MSDs/All_Lagtimes.json"
 
     # Path to main directory for saving outputs
-    savePath = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/Timing_test_outputs"
+    savePath = r"/home/vivek/Desktop/Piezo1 Test Data/Python_outputs"
 
     # Experimental parameters
     pixelWidth = 0.1092  # in microns
@@ -499,7 +508,7 @@ if __name__ == "__main__":
     localErrorLagTime = 1.0
 
     # Range of data to fit to a line
-    fit_range = [1, 25]  # bounding indices for tracks to fit, select linear region
+    fit_range = [0, 10]  # bounding indices for tracks to fit, select linear region
     # * -----END OF USER INPUTS----- * #
 
     # * -----START SUBROUTINE----- * #
@@ -529,7 +538,10 @@ if __name__ == "__main__":
     # testLoadMobileTrappedTracks_Dict = load_MobileTrapped_json(jsonMobileTrappedDictPath)
 
     # Plot the Trapped Tracks without any fitting
-    plot_TrappedTAMSD(TAMSD_DF, mobileTrappedTracks_Dict["Trapped"], frameTime)
+    if len(mobileTrappedTracks_Dict["Trapped"]) != 0:
+        plot_TrappedTAMSD(TAMSD_DF, mobileTrappedTracks_Dict["Trapped"], frameTime)
+    else:
+        print("Note: No Trapped Tracks based on current threshold selection")
 
     # Plot the TAMSD Mobile Tracks without any fitting
     # Then...

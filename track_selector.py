@@ -144,15 +144,15 @@ class NumpyEncoder(json.JSONEncoder):
 
 class imgPreProcess(object):
     def isDicFile(self, imgPath):
-        if "_dic_" in imgPath:
+        if "_dic_" or "tif" in imgPath:
             img = cv2.imread(imgPath)
             im2 = img.copy()
             im2[:, :, 0] = img[:, :, 2]
             im2[:, :, 2] = img[:, :, 0]
+            print(
+                "Note: If image appears solid black, use ImageJ to convert to a 8bit greyscale"
+            )
             return im2
-        else:
-            img = plt.imread(imgPath)
-            return img
 
 
 class trackPlots(object):
@@ -190,9 +190,9 @@ class trackPlots(object):
 
 if __name__ == "__main__":
     # * USER INPUTS GO BELOW * #
-    filename = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/AL_14_2019-07-25-TIRFM_Diff_tdt-MEFs_DishA_5_50CD_5.json"
-    tifFile = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/AL_14_2019-07-25-TIRFM_Diff_tdt-MEFs_DishA_50CD_dic_MMStack_Pos0.ome5.tif"
-    save_path = r"/home/vivek/Tobias_Group/Single_Particle_Track_Piezo1/Timing Test Oct 8, 2019/Timing_test_outputs"
+    filename = r"/home/vivek/Desktop/Piezo1 Test Data/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_5_MMStack_Pos0.ome.json"
+    tifFile = r"/home/vivek/Desktop/Piezo1 Test Data/93_2018_11_20_TIRF_mnspc_tdt_memdye_C_5_MMStack_Pos0.ome.tif"
+    save_path = r"/home/vivek/Desktop/Piezo1 Test Data/Python_outputs"
     minfrm = 50
     # * END OF USER INPUTS * #
 
