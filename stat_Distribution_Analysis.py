@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import stat_MSD_outputs as statMSDo
 from scipy.optimize import curve_fit
+from scipy import stats
 
 
 class json_converter(object):
@@ -41,16 +42,64 @@ def loadMobileTracksDF(selectedTracks_DF, mobileTrack_List, savePath):
 
 
 def alphaValAnalysis(TAMSD_DF, mobileTracks_List, cutoffPercentLength, binWidth=0.05):
+    # First show the alpha values of All Tracks
+    # Make a copy of the TAMSD_DF
+    AllTAMSDTracks_DF = TAMSD_DF.copy(deep=True)
+    # Setup a new DF to store the alpha values into
+    alphaValsAll_DF = pd.DataFrame(columns=["particle", "alpha_vals"])
+    alphaValsAll_DF["particle"] = list(AllTAMSDTracks_DF.set_index("lagt"))
+    # Re-index alphaValsAll_DF to particle in prep for iteration
+    alphaValsAll_DF.set_index("particle", inplace=True)
+    # Go over all particles/tracks and determine alpha vals, insert into alphaValsAll_DF
+    for particle in AllTAMSDTracks_DF.set_index("lagt"):
+        # Determine cutoffPercentLength of track
+        cutoffLength = int(
+            math.ceil(AllTAMSDTracks_DF[particle].count() * (cutoffPercentLength / 100))
+        )
+        cutoffSlope, cutoffIntercept, cutoffR_value, cutoffP_value, cutoffStdErr = stats.linregress(
+            np.log(AllTAMSDTracks_DF["lagt"].iloc[0:cutoffLength]),
+            np.log(AllTAMSDTracks_DF[particle].iloc[0:cutoffLength]),
+        )
+        alphaValsAll_DF.loc[particle] = cutoffSlope
+    # Calc the mean alpha val and print it to console
+    meanAlphaVal = alphaValsAll_DF.mean(axis=0)
+    print(f"Mean All: {meanAlphaVal}")
+    # Make a histogram of probabilities out of the alpha values
+    # --Setup the plot
+    fig, ax = plt.subplots(figsize=(10, 5))
+    # --Setup the bin width ranges
+    alphaMaxBin = math.ceil(alphaValsAll_DF["alpha_vals"].max() * 20) / 20
+    alphaHistBinRange = np.arange(0, alphaMaxBin + binWidth, binWidth)
+    weights = np.ones_like(alphaValsAll_DF["alpha_vals"]) / float(
+        len(alphaValsAll_DF["alpha_vals"])
+    )
+    # --Draw the plot
+    ax.hist(
+        list(alphaValsAll_DF["alpha_vals"]),
+        bins=alphaHistBinRange,
+        weights=weights,
+        color="gray",
+        alpha=0.7,
+        edgecolor="black",
+    )
+    # --Title and labels
+    ax.set_title("Alpha Value Distributions of All Tracks")
+    ax.set_xlabel("Alpha Values")
+    ax.set_ylabel("Probability")
+    # --Show the plot
+    plt.show()
+
+    # Calc and plot the alpha values of the mobile tracks
     # Use the mobileTracks_List to make a DF of mobile TAMSD
     mobileTAMSDTracks_DF = TAMSD_DF.loc[:, mobileTracks_List]
     # Insert the 'lagt' column into the mobileTAMSD DF
     mobileTAMSDTracks_DF.insert(0, "lagt", TAMSD_DF["lagt"], True)
     # Setup a new DF to store the alpha values into
-    alphaVals_DF = pd.DataFrame(columns=["particle", "alpha_vals"])
-    alphaVals_DF["particle"] = list(mobileTAMSDTracks_DF.set_index("lagt"))
-    # Re-index alphaVals_DF to particle in prep for iteration
-    alphaVals_DF.set_index("particle", inplace=True)
-    # Go over all particles/tracks and determine alpha vals, insert into alphaVals_DF
+    alphaValsMobile_DF = pd.DataFrame(columns=["particle", "alpha_vals"])
+    alphaValsMobile_DF["particle"] = list(mobileTAMSDTracks_DF.set_index("lagt"))
+    # Re-index alphaValsMobile_DF to particle in prep for iteration
+    alphaValsMobile_DF.set_index("particle", inplace=True)
+    # Go over all particles/tracks and determine alpha vals, insert into alphaValsMobile_DF
     for particle in mobileTAMSDTracks_DF.set_index("lagt"):
         # Determine cutoffPercentLength of track
         cutoffLength = int(
@@ -64,28 +113,32 @@ def alphaValAnalysis(TAMSD_DF, mobileTracks_List, cutoffPercentLength, binWidth=
             np.log(mobileTAMSDTracks_DF[particle].iloc[0:cutoffLength]),
             1,
         )
-        alphaVals_DF.loc[particle] = cutoffSlope
+        alphaValsMobile_DF.loc[particle] = cutoffSlope
     # Calc the mean alpha val and print it to console
-    meanAlphaVal = alphaVals_DF.mean(axis=0)
-    print(f"Mean {meanAlphaVal}")
+    meanAlphaVal = alphaValsMobile_DF.mean(axis=0)
+    print(f"Mean Mobile: {meanAlphaVal}")
     # Make a histogram of probabilities out of the alpha values
     # --Setup the plot
     fig, ax = plt.subplots(figsize=(10, 5))
     # --Setup the bin width ranges
-    alphaMaxBin = math.ceil(alphaVals_DF["alpha_vals"].max() * 20) / 20
+    alphaMaxBin = math.ceil(alphaValsMobile_DF["alpha_vals"].max() * 20) / 20
     alphaHistBinRange = np.arange(0, alphaMaxBin + binWidth, binWidth)
+    weights = np.ones_like(alphaValsMobile_DF["alpha_vals"]) / float(
+        len(alphaValsMobile_DF["alpha_vals"])
+    )
     # --Draw the plot
     ax.hist(
-        list(alphaVals_DF["alpha_vals"]),
+        list(alphaValsMobile_DF["alpha_vals"]),
         bins=alphaHistBinRange,
+        weights=weights,
         color="gray",
         alpha=0.7,
         edgecolor="black",
     )
     # --Title and labels
-    ax.set_title("Alpha Value Distributions")
+    ax.set_title("Alpha Value Distributions of Mobile Tracks")
     ax.set_xlabel("Alpha Values")
-    ax.set_ylabel("Count")
+    ax.set_ylabel("Probability")
     # --Show the plot
     plt.show()
 
@@ -95,16 +148,16 @@ if __name__ == "__main__":
     # * -----USER INPUTS BELOW----- * #
     # Paths to MSD .json files to load as dataframes
     # Selected Tracks DF
-    jsonSelectedTracksLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Selected_tracks/selected_track_list.json"
+    jsonSelectedTracksLoadPath = r"/home/vivek/Desktop/Piezo1 Test Data/Python_outputs/Selected_tracks/selected_track_list.json"
     # TAMSD of ALL Tracks DF (Trapped and Mobile)
-    jsonTAMSDLoadPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/TAMSD.json"
+    jsonTAMSDLoadPath = r"/home/vivek/Desktop/Piezo1 Test Data/Python_outputs/Statistics/MSDs/TAMSD.json"
     # Dict -List of Mobile and Trapped Tracks
-    jsonMobileTrappedDictPath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/Mobile_Trapped_tracks.json"
+    jsonMobileTrappedDictPath = r"/home/vivek/Desktop/Piezo1 Test Data/Python_outputs/Statistics/MSDs/Mobile_Trapped_tracks.json"
     # ALL Tracks ALL Lags DF (Trapped and Mobile)
-    jsonAllTracksAllLags = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs/Statistics/MSDs/All_Lagtimes.json"
+    jsonAllTracksAllLags = r"/home/vivek/Desktop/Piezo1 Test Data/Python_outputs/Statistics/MSDs/All_Lagtimes.json"
 
     # Path to main directory for saving outputs
-    savePath = r"/home/vivek/Documents/Python Programs/Piezo1/temp_outputs"
+    savePath = r"/home/vivek/Desktop/Piezo1 Test Data/Python_outputs"
 
     # Experimental parameters
     pixelWidth = 0.1092  # in microns
@@ -122,7 +175,7 @@ if __name__ == "__main__":
 
     # Range of data to fit to a line
     # bounding indices for tracks to fit, select linear region
-    fit_range = [1, 30]
+    fit_range = [1, 20]
     # * -----END OF USER INPUTS----- * #
 
     # * ----- START SUBROUTINE ----- * #
@@ -139,18 +192,17 @@ if __name__ == "__main__":
     MobileTrappedTracks_Dict = jc.load_MobileTrapped_json(jsonMobileTrappedDictPath)
 
     # Histogram the alpha values for the TAMSD of Mobile Tracks up to a cutoff percentage
-    alphaValAnalysis(TAMSD_DF, MobileTrappedTracks_Dict["Mobile"], 10)
+    alphaValAnalysis(TAMSD_DF, MobileTrappedTracks_Dict["Mobile"], 20)
 
     # * -----  END SUBROUTINE  ----- * #
 
     # ! ----- START DEBUGGING  ----- ! #
-    # Cumulative Distributon Function, lagtime_limit is in number of frames and inclusive
+    # Cumulative Distributon Function, lagtime_limit is in units of number of frames and inclusive
 
     def func_cdfONEmob(x, d):
         return 1 - np.exp(-(x / d))
 
-    # ! THIS LAGTIME LIMIT SHOULD ALSO DEFINE the AllLagsAllTracks_DF such that there are only this many values
-    # ! More values or all values results in  a memory error.  Likely you will only need up to 20 lagtime, at most
+    # ! the lagtime_limit must be less than the number of lags collected. Add code to verify this
     def cumulDistrib(
         AllTracksAllLags_DF,
         MobileTracks_List,
@@ -160,6 +212,8 @@ if __name__ == "__main__":
     ):
         # Renames the index of AllTracksAllLags_DF to 'particle'
         AllTracksAllLags_DF.index.names = ["particle"]
+        with pd.option_context("display.max_rows", None, "display.max_columns", None):
+            print(AllTracksAllLags_DF)
         # Gen mobileTracksAllLags_DF upto the lagtime_limit var
         mobileTracksAllLags_DF = AllTracksAllLags_DF.loc[
             MobileTracks_List, "lagt":f"y_lag{lagtime_limit}"
@@ -192,11 +246,9 @@ if __name__ == "__main__":
         cumulDistrib_DF = cumulDistrib_DF.reindex(
             columns=cumulDistrib_DF.columns.tolist() + CDF_columns_results
         )
-
         for particle in particle_List:
             # Calculate and insert all r^2 values into cumulDistrib_DF
             for lag in range(lagtime_limit + 1):
-                # for every lag, find the r^2,
                 xy_vals = np.array(
                     mobileTracksAllLags_DF.loc[
                         (particle, 0), [f"x_lag{lag}", f"y_lag{lag}"]
@@ -231,25 +283,37 @@ if __name__ == "__main__":
             plotCDF_DF = plotCDF_DF.sort_values(
                 [f"r2_lag{plotNum}", f"CDF_lag{plotNum}"], ascending=[True, False]
             )
-            print(plotCDF_DF)
             # Plot the two columns with r2 as 'x' and CDF as 'y'
             # Gather the x y data
-            CDF_x_data = plotCDF_DF[f"r2_lag{plotNum}"]
-            CDF_y_data = plotCDF_DF[f"CDF_lag{plotNum}"]
+            CDF1_x_data = plotCDF_DF[f"r2_lag{plotNum}"]
+            CDF1_y_data = plotCDF_DF[f"CDF_lag{plotNum}"]
+            # print(CDF1_x_data) #! here i am
             # Generate fitted curve
-            popt, pcov = curve_fit(func_cdfONEmob, CDF_x_data, CDF_y_data)
-            residuals = CDF_y_data - func_cdfONEmob(CDF_x_data, popt)
-            print(residuals)
+            CDF1_popt, CDF1_pcov = curve_fit(func_cdfONEmob, CDF1_x_data, CDF1_y_data)
+            CDF1_residuals = CDF1_y_data - func_cdfONEmob(CDF1_x_data, CDF1_popt)
             # Setup the new figure for CDF plots
-            # CDF_fig = plt.figure()
+            fig, (ax0, ax1) = plt.subplots(
+                2,
+                1,
+                figsize=(10, 7),
+                gridspec_kw={"height_ratios": [4, 8]},
+                sharex=True,
+            )
             # Plot fitted curve
-            plt.plot(
-                CDF_x_data, func_cdfONEmob(CDF_x_data, *popt), label="Fitted Curve"
+            ax1.plot(
+                CDF1_x_data,
+                func_cdfONEmob(CDF1_x_data, *CDF1_popt),
+                label="Fitted Curve",
             )
             # Plot original data
-            plt.step(CDF_x_data, CDF_y_data, label="Original Data")
+            ax1.step(CDF1_x_data, CDF1_y_data, label="Data", color="black")
+            # Set the axes scaling
+            ax1.set_xscale("log")
             # Set location of legend on plot
-            plt.legend(loc="upper left")
+            ax1.legend(loc="upper left")
+            # Plot the CDF1_residuals
+            ax0.plot(CDF1_x_data, CDF1_residuals, linestyle="dashed")
+            ax0.legend(["CDF1 Residuals"], loc="lower left")
             # Show the plot
             plt.show()
             # ! NEED TO ADD LABELS THAT INDICATE WHICH LAGTIME IS BEING PLOTTED

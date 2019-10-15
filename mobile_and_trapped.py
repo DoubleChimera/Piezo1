@@ -462,7 +462,8 @@ def plot_AvgMobileTA_EA_MSD(
     # Padding value to increase axes by
     axes_padding = 0.1
     # Calculate min/max values for axes
-    # Calculate min/max values for axes
+    # ! Done incorrectly: Should use the error cloud max values * the padding percentage
+    # ! Perhaps round to the nearest integer, and find a way to label all corners of axes?
     x_min = avgTAMSD_DF.index[0] - (avgTAMSD_DF.index[0] * axes_padding)
     x_max = avgTAMSD_DF.index.max() + (avgTAMSD_DF.index.max() * axes_padding)
     y_min = avgTAMSD_DF.min().min() - (avgTAMSD_DF.min().min() * axes_padding)
@@ -508,7 +509,7 @@ if __name__ == "__main__":
     localErrorLagTime = 1.0
 
     # Range of data to fit to a line
-    fit_range = [0, 10]  # bounding indices for tracks to fit, select linear region
+    fit_range = [1, 20]  # bounding indices for tracks to fit, select linear region
     # * -----END OF USER INPUTS----- * #
 
     # * -----START SUBROUTINE----- * #
