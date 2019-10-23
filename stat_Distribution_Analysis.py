@@ -202,18 +202,19 @@ if __name__ == "__main__":
     def func_cdfONEmob(x, d):
         return 1 - np.exp(-(x / d))
 
+    def func_cdfTWOmob(x, w, d_1, d_2):
+        return 1 - (w * np.exp(-x / d_1) + (1 - w) * np.exp(-x / d_2))
+
     # ! the lagtime_limit must be less than the number of lags collected. Add code to verify this
     def cumulDistrib(
         AllTracksAllLags_DF,
         MobileTracks_List,
         frameTime,
         lagtime_limit=10,
-        outputPlotRange=1,
+        outputPlotLagRange=10,
     ):
         # Renames the index of AllTracksAllLags_DF to 'particle'
         AllTracksAllLags_DF.index.names = ["particle"]
-        with pd.option_context("display.max_rows", None, "display.max_columns", None):
-            print(AllTracksAllLags_DF)
         # Gen mobileTracksAllLags_DF upto the lagtime_limit var
         mobileTracksAllLags_DF = AllTracksAllLags_DF.loc[
             MobileTracks_List, "lagt":f"y_lag{lagtime_limit}"
@@ -227,54 +228,71 @@ if __name__ == "__main__":
         mobileTracksAllLags_DF.reset_index(inplace=True)
         mobileTracksAllLags_DF.set_index(["particle", "frame"], inplace=True)
         # make a list of all unique indices corresponding to particle numbers, use that list as the index for this DF.
-        particle_List = mobileTracksAllLags_DF.reset_index().particle.unique()
-        # Gen an empty DF for r^2 and CDF results
-        cumulDistrib_DF = pd.DataFrame(particle_List, columns=["particle"]).set_index(
-            "particle"
-        )
-        # Setup the prefix and suffix for the column names
+        # ! UNUSED FOR NOW
+        # particle_List = mobileTracksAllLags_DF.reset_index().particle.unique()
         CDF_columns_prefix = ["r2", "CDF"]
-        CDF_columns_suffix = ["_lag{}".format(l) for l in range(lagtime_limit + 1)]
+        CDF_columns_suffix = ["_lag{}".format(l) for l in range(1, lagtime_limit + 1)]
         # Iterate over the prefixes and suffixes to produce the column names list
         stat_MSD = statMSDo.stat_MSD()
         CDF_columns_results = list(
             stat_MSD.genLagColumns(CDF_columns_suffix, CDF_columns_prefix)
         )
-        # Delete the useless 'CDF_lag0' column name
-        CDF_columns_results.remove("CDF_lag0")
-        # Append the columns names list to the cumulDistrib_DF
-        cumulDistrib_DF = cumulDistrib_DF.reindex(
-            columns=cumulDistrib_DF.columns.tolist() + CDF_columns_results
-        )
-        for particle in particle_List:
-            # Calculate and insert all r^2 values into cumulDistrib_DF
-            for lag in range(lagtime_limit + 1):
-                xy_vals = np.array(
-                    mobileTracksAllLags_DF.loc[
-                        (particle, 0), [f"x_lag{lag}", f"y_lag{lag}"]
-                    ]
+        # Generate an empty DataFrame with the columns names list to store values into
+        cumulDistrib_DF = pd.DataFrame(columns=CDF_columns_results)
+        # Loop over all the lagtimes
+        for lag in range(1, lagtime_limit + 1):
+            # Grab the x,y for all particles at a lag time and square the values
+            squaredLagXY = pow(
+                AllTracksAllLags_DF.loc[:, f"x_lag{lag}":f"y_lag{lag}"], 2
+            )
+            # Insert the values into r2_lag{lag} column in the cumulDistrib_DF
+            cumulDistrib_DF.loc[:, f"r2_lag{lag}"] = (
+                squaredLagXY.loc[:, f"x_lag{lag}"]
+                .add(squaredLagXY.loc[:, f"y_lag{lag}"])
+                .reset_index(drop=True)
+            )
+            # Replace any float(0) values in that column with NaN
+            cumulDistrib_DF.loc[:, f"r2_lag{lag}"].replace(
+                float(0), np.nan, inplace=True
+            )
+            # Sort the values in that column in ascending order and drop NaNs
+            CDF_sortedTemp = cumulDistrib_DF.sort_values(f"r2_lag{lag}")
+            # Reset the index and replace the designated column
+            cumulDistrib_DF.loc[:, f"r2_lag{lag}"] = CDF_sortedTemp.loc[
+                :, f"r2_lag{lag}"
+            ].reset_index(drop=True)
+            # Determine the number of relevant (non NaN) points in that column
+            CDF_pointCount = cumulDistrib_DF.loc[:, f"r2_lag{lag}"].count()
+            # Make an empty list to store CDF values into
+            CDF_valueList = []
+            # Loop over each point in the column that is not NaN, dont use index, it will unsort
+            for r2_IndexValue in range(CDF_pointCount):
+                # Store each lag point as a variable
+                r2_to_compare = float(
+                    cumulDistrib_DF.loc[:, f"r2_lag{lag}"][[r2_IndexValue]]
                 )
-                r2_temp = (xy_vals[0] ** 2) + (xy_vals[1] ** 2)
-                # Store result in cumulDistrib_DF in r2_lag{lag}
-                cumulDistrib_DF.at[particle, f"r2_lag{lag}"] = r2_temp
-        # At this point all the cumulDistrib lags have been inserted
-        # Now calc all cumulative distribution function values
-        # Loop over particle list
-        for particle in particle_List:
-            # Loop over each lag in particle list
-            for lag in np.arange(lagtime_limit) + 1:
-                # Determine total number of tracks, for later division
-                CDF_total_tracks = cumulDistrib_DF[f"r2_lag{lag}"].count()
-                # Extract value to compare against the rest of the list of values
-                r2_to_compare = float(cumulDistrib_DF.loc[particle, [f"r2_lag{lag}"]])
-                # Determine how many values are less than or equal to it
-                CDF_temp = (cumulDistrib_DF[f"r2_lag{lag}"] <= r2_to_compare).sum()
-                # Divide that total by the number of tracks
-                CDF_temp = CDF_temp / CDF_total_tracks
-                # Insert that value in the appropriate place in the cumulDistrib_DF
-                cumulDistrib_DF.at[particle, f"CDF_lag{lag}"] = CDF_temp
+                # Determine the index of the last valid entry (non NaN)
+                CDF_lastValidIndex = cumulDistrib_DF.loc[
+                    :, f"r2_lag{lag}"
+                ].last_valid_index()
+                # Extract the column of data we are interested in for the current CDF calc up to the last non NaN index
+                CDF_tempColumn = cumulDistrib_DF.loc[
+                    :CDF_lastValidIndex, f"r2_lag{lag}"
+                ]
+                # Comparing to the relevant column, determine how many are less than or equal to it
+                CDF_numLess = (np.array(CDF_tempColumn) <= r2_to_compare).sum()
+                # Divide CDF_numLess by the total number of relevant points in that column
+                CDF_value = CDF_numLess / CDF_pointCount
+                # Append the value to the CDF_valueList
+                CDF_valueList.append(CDF_value)
+            # Insert that value in the appropriate column in the cumulDistrib_DF
+            cumulDistrib_DF.loc[:, f"CDF_lag{lag}"] = pd.Series(CDF_valueList)
+        # After the DF is generated, drop rows with all NaN values
+        cumulDistrib_DF.dropna(axis=0, how="all", inplace=True)
+
+        # TODO Plotter subroutine to plot the first lag and output the other plots to a save folder
         # Plot the cumulative distribution function
-        for plotNum in np.arange(outputPlotRange) + 1:
+        for plotNum in range(1, outputPlotLagRange + 1):
             # Grab the columns of interest
             plotCDF_DF = cumulDistrib_DF[
                 [f"r2_lag{plotNum}", f"CDF_lag{plotNum}"]
@@ -283,37 +301,91 @@ if __name__ == "__main__":
             plotCDF_DF = plotCDF_DF.sort_values(
                 [f"r2_lag{plotNum}", f"CDF_lag{plotNum}"], ascending=[True, False]
             )
+            # Remove any trailing NaNs from the DF
+            plotCDF_DF.dropna(axis=0, how="all", inplace=True)
             # Plot the two columns with r2 as 'x' and CDF as 'y'
             # Gather the x y data
-            CDF1_x_data = plotCDF_DF[f"r2_lag{plotNum}"]
-            CDF1_y_data = plotCDF_DF[f"CDF_lag{plotNum}"]
-            # print(CDF1_x_data) #! here i am
-            # Generate fitted curve
-            CDF1_popt, CDF1_pcov = curve_fit(func_cdfONEmob, CDF1_x_data, CDF1_y_data)
-            CDF1_residuals = CDF1_y_data - func_cdfONEmob(CDF1_x_data, CDF1_popt)
+            CDF_x_data = plotCDF_DF[f"r2_lag{plotNum}"]
+            CDF_y_data = plotCDF_DF[f"CDF_lag{plotNum}"]
+            # Generate fitted curve and residuals for cdfONEmob
+            CDF1_popt, CDF1_pcov = curve_fit(func_cdfONEmob, CDF_x_data, CDF_y_data)
+            CDF1_residuals = CDF_y_data - func_cdfONEmob(CDF_x_data, CDF1_popt)
+            # Generate fitted curve and residuals for cdfTWOmob
+            CDF2_popt, CDF2_pcov = curve_fit(
+                func_cdfTWOmob, CDF_x_data, CDF_y_data, p0=[0.5, 0.01, 0.1]
+            )
+            CDF2_residuals = CDF_y_data - func_cdfTWOmob(CDF_x_data, *CDF2_popt)
+
             # Setup the new figure for CDF plots
             fig, (ax0, ax1) = plt.subplots(
-                2,
-                1,
-                figsize=(10, 7),
-                gridspec_kw={"height_ratios": [4, 8]},
-                sharex=True,
-            )
-            # Plot fitted curve
-            ax1.plot(
-                CDF1_x_data,
-                func_cdfONEmob(CDF1_x_data, *CDF1_popt),
-                label="Fitted Curve",
+                2, 1, figsize=(6, 9), gridspec_kw={"height_ratios": [4, 8]}, sharex=True
             )
             # Plot original data
-            ax1.step(CDF1_x_data, CDF1_y_data, label="Data", color="black")
+            ax1.plot(CDF_x_data, CDF_y_data, label="Data", color="black")
+            # Plot the curve for cdfONEmob
+            ax1.step(
+                CDF_x_data,
+                func_cdfONEmob(CDF_x_data, *CDF1_popt),
+                color="C0",
+                label="Single",
+                linestyle="dashed",
+            )
+            # Plot the curve for cdfTWOmob
+            ax1.step(
+                CDF_x_data,
+                func_cdfTWOmob(CDF_x_data, *CDF2_popt),
+                color="C1",
+                label="Double",
+                linestyle="dashed",
+            )
             # Set the axes scaling
             ax1.set_xscale("log")
             # Set location of legend on plot
             ax1.legend(loc="upper left")
+            # Set the min/max values for the x, y axes
+            x_min = 0.0001
+            x_max = 0.1
+            y_min_CDF = 0
+            y_max_CDF = 1
+            # Padding value for even adjustments
+            axes_padding_Xaxis = 0.1
+            axes_padding_CDF_Yaxis = 0.1
+            # Adjust any axes below with padding, comment out what you dont want or need
+            x_min = x_min - (x_min * axes_padding_Xaxis)
+            x_max = x_max + (x_max * axes_padding_Xaxis)
+            y_min_CDF = y_min_CDF - (y_min_CDF * axes_padding_CDF_Yaxis)
+            y_max_CDF = y_max_CDF + (y_max_CDF * axes_padding_CDF_Yaxis)
+            # Apply the min-max axes values to the plot
+            ax1.set(ylim=(y_min_CDF, y_max_CDF), xlim=(x_min, x_max))
+
             # Plot the CDF1_residuals
-            ax0.plot(CDF1_x_data, CDF1_residuals, linestyle="dashed")
-            ax0.legend(["CDF1 Residuals"], loc="lower left")
+            ax0.plot(
+                CDF_x_data,
+                CDF1_residuals,
+                color="C0",
+                linestyle="dashed",
+                label="Single",
+            )
+            # Plot the CDF2_residuals
+            ax0.plot(
+                CDF_x_data,
+                CDF2_residuals,
+                color="C1",
+                linestyle="dashed",
+                label="Double",
+            )
+            # Plot a horizontal line at y=0 on the residuals plot for reference
+            ax0.axhline(y=0.0, color="black", alpha=0.7, linestyle="dashed")
+            ax0.legend(loc="upper left")
+            # Adjust the y-axes for this plot here
+            y_min_resid = -0.05
+            y_max_resid = 0.10
+            # Padding value for even adjustments
+            axes_padding_resid_Yaxis = 0.1
+            y_min_resid = y_min_resid + (y_min_resid * 5 * axes_padding_resid_Yaxis)
+            y_max_resid = y_max_resid + (y_max_resid * axes_padding_resid_Yaxis)
+            # Apply the min-max axes to the plot
+            ax0.set(ylim=(y_min_resid, y_max_resid))
             # Show the plot
             plt.show()
             # ! NEED TO ADD LABELS THAT INDICATE WHICH LAGTIME IS BEING PLOTTED
