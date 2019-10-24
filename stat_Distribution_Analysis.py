@@ -408,7 +408,9 @@ if __name__ == "__main__":
 
             # Set a title for the plot
             fig.suptitle(
-                r"CDF Plots with Residuals at Lag {:0.2f}s".format(currLagTime)
+                r"CDF Plots with Residuals at Lag {:0.2f}s".format(currLagTime),
+                y=0.95,
+                fontsize=18,
             )
 
             # Adjust the vertical distance between the subplots
