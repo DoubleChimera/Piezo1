@@ -338,6 +338,18 @@ if __name__ == "__main__":
                 label="Double",
                 linestyle="dashed",
             )
+            # Determine current lagTime rounded to 2 decimal places
+            currLagTime = round(plotNum / frameTime, 2)
+            # Set the label for the x-axis and y-axis
+            ax1.set_xlabel(r"$r^2$ ($\mu$m$^2$)", fontsize=15)
+            ax1.set_ylabel(
+                r"CDF($r^2$, t$_{{lag}}$={:0.2f}s)".format(currLagTime), fontsize=15
+            )
+            # Set the ticks to be inside the plot area
+            ax1.tick_params(which="both", direction="in")
+            # Set the right-side y-axis tick marks with no numbers
+            ax1.yaxis.set_ticks_position("both")
+            ax1.xaxis.set_ticks_position("both")
             # Set the axes scaling
             ax1.set_xscale("log")
             # Set location of legend on plot
@@ -374,18 +386,34 @@ if __name__ == "__main__":
                 linestyle="dashed",
                 label="Double",
             )
+            # Set the label for the y-axis
+            ax0.set_ylabel(r"Residuals", fontsize=15, labelpad=0)
+            # Set the ticks to be inside the plot area
+            ax0.tick_params(which="both", direction="in")
+            # Set the right-side y-axis tick marks with no numbers
+            ax0.yaxis.set_ticks_position("both")
+            ax0.xaxis.set_ticks_position("both")
             # Plot a horizontal line at y=0 on the residuals plot for reference
             ax0.axhline(y=0.0, color="black", alpha=0.7, linestyle="dashed")
             ax0.legend(loc="upper left")
             # Adjust the y-axes for this plot here
-            y_min_resid = -0.05
+            y_min_resid = -0.10
             y_max_resid = 0.10
             # Padding value for even adjustments
             axes_padding_resid_Yaxis = 0.1
-            y_min_resid = y_min_resid + (y_min_resid * 5 * axes_padding_resid_Yaxis)
+            y_min_resid = y_min_resid + (y_min_resid * axes_padding_resid_Yaxis)
             y_max_resid = y_max_resid + (y_max_resid * axes_padding_resid_Yaxis)
             # Apply the min-max axes to the plot
             ax0.set(ylim=(y_min_resid, y_max_resid))
+
+            # Set a title for the plot
+            fig.suptitle(
+                r"CDF Plots with Residuals at Lag {:0.2f}s".format(currLagTime)
+            )
+
+            # Adjust the vertical distance between the subplots
+            plt.subplots_adjust(hspace=0.03)
+
             # Show the plot
             plt.show()
             # ! NEED TO ADD LABELS THAT INDICATE WHICH LAGTIME IS BEING PLOTTED
