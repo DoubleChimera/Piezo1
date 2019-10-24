@@ -319,6 +319,7 @@ def cumulDistrib(
             label="Double",
             linestyle="dashed",
         )
+        print(func_cdfTWOmob(CDF_x_data, *CDF2_popt))
         # Determine current lagTime rounded to 2 decimal places
         currLagTime = round(plotNum / frameTime, 2)
         # Set the label for the x-axis and y-axis
