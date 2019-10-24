@@ -4,6 +4,7 @@ import math
 
 # import os.path
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator, AutoMinorLocator
 import numpy as np
 import pandas as pd
 import stat_MSD_outputs as statMSDo
@@ -278,7 +279,7 @@ def cumulDistrib(
         CDF2_popt, CDF2_pcov = curve_fit(
             func_cdfTWOmob, CDF_x_data, CDF_y_data, p0=[0.5, 0.01, 0.1]
         )
-        # ! DEBUG for Waiting Factor
+        # Weighting Factor determination
         # Determine the stdDev for the wValue perr = np.sqrt(np.diag(pcov))
         CDF2_popt_stdDev = np.sqrt(np.diag(CDF2_pcov))
         # Determine the current lagtime being evaluated
@@ -393,6 +394,56 @@ def cumulDistrib(
         # Show the plot
         plt.show()
 
+    # Plot CDF Weighting factors
+    fig2, ax3 = plt.subplots(1, 1, figsize=(10, 5))
+    # Plot wVals vs lagt, set label for legend
+    ax3.plot(wValsMob_DF.index, wValsMob_DF["wVal"], "o", label=r"CDF w Values")
+    # Plot a horizontal line at y=0.5 on the wVals plot for reference
+    ax3.axhline(y=0.5, color="black", alpha=0.7, linestyle="dashed")
+    # Set the label for the x-axis and y-axis
+    ax3.set_xlabel(r"Lag Time (s)", fontsize=15)
+    ax3.set_ylabel(r"CDF Weighting Factor, w", fontsize=15)
+    # Set the ticks to be inside the plot area
+    ax3.tick_params(which="both", direction="in")
+    # Set the right-side y-axis tick marks with no numbers
+    ax3.yaxis.set_ticks_position("both")
+    ax3.xaxis.set_ticks_position("both")
+    # Set the axes scaling
+    ax3.set_xscale("linear")
+    ax3.set_yscale("linear")
+    # Set the min/max values for the x, y axes
+    x_min_wVals = 0.0
+    x_max_wVals = wValsMob_DF.index[-1]
+    y_min_wVals = 0.0
+    y_max_wVals = 1.0
+    # Padding value for even adjustments
+    axes_padding_wVals = 0.1
+    # Adjust any axes below with padding, comment out what you dont want or need
+    # x_min_wVals = x_min_wVals - (x_max_wVals * 0.05)
+    x_max_wVals = x_max_wVals + (x_max_wVals * 0.05)
+    y_min_wVals = y_min_wVals - axes_padding_wVals / 2
+    y_max_wVals = y_max_wVals + axes_padding_wVals / 2
+    # Turn on the minor tick marks on the axes
+    plt.minorticks_on()
+    # Apply the min-max axes values to the plot
+    ax3.set(ylim=(y_min_wVals, y_max_wVals), xlim=(x_min_wVals, x_max_wVals))
+    # Set the x-axis major ticks to be multiples of 2 * frameTime
+    ax3.xaxis.set_major_locator(MultipleLocator(2 * frameTime / 100))
+    # Set the x-axis minor ticks to be multiples of frameTime
+    ax3.xaxis.set_minor_locator(AutoMinorLocator(2))
+    # Set the title for the window
+    fig2.canvas.set_window_title("CDF Weighting Factor vs Lag Time")
+    # Set a title for the plot
+    fig2.suptitle(
+        r"Mobile CDF Weighting Factors vs Lag Time up to {}".format(
+            wValsMob_DF.index[-1]
+        ),
+        y=0.95,
+        fontsize=18,
+    )
+    # Show the plot
+    plt.show()
+
 
 if __name__ == "__main__":
 
@@ -451,8 +502,8 @@ if __name__ == "__main__":
         AllTracksAllLags_DF,
         MobileTrappedTracks_Dict["Mobile"],
         frameTime,
-        lagtime_limit=10,
-        outputPlotLagRange=10,
+        lagtime_limit=20,
+        outputPlotLagRange=20,
     )
 
     # * -----  END SUBROUTINE  ----- * #
