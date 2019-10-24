@@ -159,8 +159,18 @@ def cumulDistrib(
     lagtime_limit=10,
     outputPlotLagRange=10,
 ):
-    # ! CHECK THAT LAGTIME LIMIT IS LESS THAN OR EQUAL TO NUMBER OF LAGS COLLECTED
-    # ! Checking code goes here!!
+    # Check that lagtime limit is less than or equal to the available lags in AllTracksAllLags_DF
+    # Determine number of lags stored in AllTracksAllLags_DF
+    storedLags = int(((AllTracksAllLags_DF.shape[1] - 6) / 2))
+    # Check if lagtime_limit is greater than the stored number of lags
+    if lagtime_limit > storedLags:
+        # If it is, reduce the lagtime_limit to the max number of lags available
+        print("NOTE: lagtime_limit greater than stored number of lags...")
+        print(f"Adjusting lagtime limit from: {lagtime_limit}  to: {storedLags}")
+        lagtime_limit = storedLags
+    # Check that the ouputPlotLagRange is less than or equal to the adjusted lagtime_limit
+    if outputPlotLagRange > lagtime_limit:
+        outputPlotLagRange = lagtime_limit
     # Renames the index of AllTracksAllLags_DF to 'particle'
     AllTracksAllLags_DF.index.names = ["particle"]
     # Gen mobileTracksAllLags_DF upto the lagtime_limit var
@@ -232,6 +242,20 @@ def cumulDistrib(
     # After the DF is generated, drop rows with all NaN values
     cumulDistrib_DF.dropna(axis=0, how="all", inplace=True)
 
+    # Setup a new empty dataframe for wValsMob_DF with the adjusted outputPlotLagRange as lagtimes in the index
+    # Generate index of wValsMob_DF, will have to divide this by frameTime later
+    wValsMob_index = np.linspace(
+        1, outputPlotLagRange, outputPlotLagRange, endpoint=True
+    )
+    # Generate the new wValsMob_DF
+    wValsMob_DF = pd.DataFrame(columns=["lagt", "wVal", "wVal_stdDev"])
+    # Insert the index values that were previously calculated
+    wValsMob_DF["lagt"] = wValsMob_index
+    # Divide the index by frameTime
+    wValsMob_DF.loc[:, "lagt"] /= frameTime
+    # Set the 'lagt' column as the index
+    wValsMob_DF.set_index("lagt", inplace=True)
+
     # TODO Plotter subroutine to plot the first lag and output the other plots to a save folder
     # Plot the cumulative distribution function
     for plotNum in range(1, outputPlotLagRange + 1):
@@ -254,6 +278,22 @@ def cumulDistrib(
         CDF2_popt, CDF2_pcov = curve_fit(
             func_cdfTWOmob, CDF_x_data, CDF_y_data, p0=[0.5, 0.01, 0.1]
         )
+        # ! DEBUG for Waiting Factor
+        # Determine the stdDev for the wValue perr = np.sqrt(np.diag(pcov))
+        CDF2_popt_stdDev = np.sqrt(np.diag(CDF2_pcov))
+        # Determine the current lagtime being evaluated
+        wVal_lag = round(plotNum / frameTime, 1)
+        # Evaluate the w value based on d_2 > d_1 adjust accordingly
+        if CDF2_popt[2] < CDF2_popt[1]:
+            # If d_2 < d_1, use 1-wVal instead of wVal
+            wValsMob_DF.loc[wVal_lag, "wVal"] = 1 - CDF2_popt[0]
+        else:
+            # if d_2 > d_1, use wVal
+            wValsMob_DF.loc[wVal_lag, "wVal"] = CDF2_popt[0]
+        wValsMob_DF.loc[wVal_lag, "wVal"] = CDF2_popt[0]
+        # Insert the stdDev value for the corresponding wVal
+        wValsMob_DF.loc[wVal_lag, "wVal_stdDev"] = CDF2_popt_stdDev[0]
+
         CDF2_residuals = CDF_y_data - func_cdfTWOmob(CDF_x_data, *CDF2_popt)
 
         # Setup the new figure for CDF plots
@@ -406,7 +446,14 @@ if __name__ == "__main__":
     alphaValAnalysis(TAMSD_DF, MobileTrappedTracks_Dict["Mobile"], 20)
 
     # Cumulative Distributon Function, lagtime_limit is in units of number of frames and inclusive
-    cumulDistrib(AllTracksAllLags_DF, MobileTrappedTracks_Dict["Mobile"], frameTime)
+    # Default lagtime_limit and outputPlotLagRange are 10
+    cumulDistrib(
+        AllTracksAllLags_DF,
+        MobileTrappedTracks_Dict["Mobile"],
+        frameTime,
+        lagtime_limit=10,
+        outputPlotLagRange=10,
+    )
 
     # * -----  END SUBROUTINE  ----- * #
 
