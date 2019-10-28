@@ -303,6 +303,7 @@ def cumulDistrib(
         )
         # Plot original data
         ax1.plot(CDF_x_data, CDF_y_data, label="Data", color="black")
+        print(CDF_y_data)
         # Plot the curve for cdfONEmob
         ax1.step(
             CDF_x_data,
@@ -319,7 +320,6 @@ def cumulDistrib(
             label="Double",
             linestyle="dashed",
         )
-        print(func_cdfTWOmob(CDF_x_data, *CDF2_popt))
         # Determine current lagTime rounded to 2 decimal places
         currLagTime = round(plotNum / frameTime, 2)
         # Set the label for the x-axis and y-axis
@@ -444,6 +444,19 @@ def cumulDistrib(
     )
     # Show the plot
     plt.show()
+
+    # Fit CDF to different models --Random Fractal, Geometric Fractal, CTRW...
+    # Random fractal modeled by percolation cluster
+    # Define static variables
+    # d_w: anomalous diffusion exponent
+    # d_w = 0.7893
+    # d_f: fractal dimensionality
+    # we are looking for this in this fit...
+    # dim = dimensionality of the diffusion process
+    # dim = 2
+    # u = 1.65 +- 0.1 , from a fit, look at reference in mathematica code
+    # u = 1.65
+    # setup a new DataFrame for this evaluation
 
 
 if __name__ == "__main__":
