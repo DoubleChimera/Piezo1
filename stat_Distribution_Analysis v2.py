@@ -276,6 +276,15 @@ def cumulDistrib(
     print(cumulDistrib_DF)
 
     # ! Here goes the code to bin CDF values
+    # ! Here goes the code to bin CDF values
+    # ! Here goes the code to bin CDF values
+    # ! Here goes the code to bin CDF values
+    # ! Here goes the code to bin CDF values
+    # ! Here goes the code to bin CDF values
+    # ! Here goes the code to bin CDF values
+    # ! Here goes the code to bin CDF values
+    # ! Here goes the code to bin CDF values
+    # ! Here goes the code to bin CDF values
 
     # Setup a new empty dataframe for wValsMob_DF with the adjusted outputPlotLagRange as lagtimes in the index
     # Generate index of wValsMob_DF, will have to divide this by frameTime later
