@@ -7,7 +7,7 @@ repos:
     -   id: check-yaml
     -   id: check-added-large-files
     -   id: flake8
-        args: ['--ignore=E501,W503,E203',
+        args: ['--ignore=E501,W503,E203, E731',
                '--max-line-length=120',
                '--max-complexity=18',
                '--select=B,C,E,F,W,T4,B9']

@@ -1,6 +1,16 @@
-quanitify the Ca ions that are coordinating with residues, with membrane lipids (POPC or POPS), and ions that bridge residues and lipids
+Quanitify the Ca ions that are coordinating with residues, with membrane lipids (POPC or POPS), and ions that bridge residues and lipids
 Consider monovalent ions as a control
 
 check disordered pHLIP protonation...
 mask = ~np.isnan(varx) & ~np.isnan(vary)
 slope, intercept, r_value, p_value, std_err = stats.linregress(varx[mask], vary[mask])
+
+Make sure the fitting is done to linear data, not log-log data.
+Produce synthetic fbm data and process it
+Evaluate the mathematica nonlinearfit to develop a better comparison to python
+Make sure all the scale bars are the same in python and mathematica
+
+pHLIP
+Develop tools to evaluate the coordination of ions and lipids
+Color the phosphates of POPC and POPS differently
+Email ladokhin with an update

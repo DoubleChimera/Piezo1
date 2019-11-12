@@ -48,6 +48,17 @@ def alphaValAnalysis(TAMSD_DF, mobileTracks_List, cutoffPercentLength, binWidth=
     # First show the alpha values of All Tracks
     # Make a copy of the TAMSD_DF
     AllTAMSDTracks_DF = TAMSD_DF.copy(deep=True)
+    # Insert a '0' MSD value for lagtime 0 at the beginning of the DF
+    # --Make an empty list as long as the particle count
+    zeroLagList = np.empty((len(AllTAMSDTracks_DF.columns),), dtype=np.int)
+    # --Fill the empty list with zeroes
+    zeroLagList.fill(0)
+    # --Insert that list at the -1 indexed row
+    AllTAMSDTracks_DF.loc[-1] = zeroLagList
+    # --Increase all indexes by 1, making the -1 index zero
+    AllTAMSDTracks_DF.index = AllTAMSDTracks_DF.index + 1
+    # --Sort the DF by index values
+    AllTAMSDTracks_DF = AllTAMSDTracks_DF.sort_index()
     # Setup a new DF to store the alpha values into
     alphaValsAll_DF = pd.DataFrame(columns=["particle", "alpha_vals"])
     alphaValsAll_DF["particle"] = list(AllTAMSDTracks_DF.set_index("lagt"))
@@ -56,14 +67,19 @@ def alphaValAnalysis(TAMSD_DF, mobileTracks_List, cutoffPercentLength, binWidth=
     # Go over all particles/tracks and determine alpha vals, insert into alphaValsAll_DF
     for particle in AllTAMSDTracks_DF.set_index("lagt"):
         # Determine cutoffPercentLength of track
-        cutoffLength = int(
-            math.ceil(AllTAMSDTracks_DF[particle].count() * (cutoffPercentLength / 100))
+        cutoffIndex = int(
+            math.ceil(
+                (math.floor(AllTAMSDTracks_DF[particle].count() / 2) + 1)
+                * (cutoffPercentLength / 100)
+            )
         )
         cutoffSlope, cutoffIntercept, cutoffR_value, cutoffP_value, cutoffStdErr = stats.linregress(
-            np.log(AllTAMSDTracks_DF["lagt"].iloc[0:cutoffLength]),
-            np.log(AllTAMSDTracks_DF[particle].iloc[0:cutoffLength]),
+            np.log(AllTAMSDTracks_DF["lagt"].iloc[1:cutoffIndex]),
+            np.log(AllTAMSDTracks_DF[particle].iloc[1:cutoffIndex]),
         )
         alphaValsAll_DF.loc[particle] = cutoffSlope
+        # print(f'a-value {particle} : {cutoffSlope}')
+        # print(f'r-squared val      : {cutoffR_value**2}')
     # Calc the mean alpha val and print it to console
     meanAlphaVal = alphaValsAll_DF.mean(axis=0)
     print(f"Mean All: {meanAlphaVal}")
@@ -72,7 +88,7 @@ def alphaValAnalysis(TAMSD_DF, mobileTracks_List, cutoffPercentLength, binWidth=
     fig, ax = plt.subplots(figsize=(10, 5))
     # --Setup the bin width ranges
     alphaMaxBin = math.ceil(alphaValsAll_DF["alpha_vals"].max() * 20) / 20
-    alphaHistBinRange = np.arange(0, alphaMaxBin + binWidth, binWidth)
+    alphaHistBinRange = np.arange(-0.2, alphaMaxBin + binWidth, binWidth)
     weights = np.ones_like(alphaValsAll_DF["alpha_vals"]) / float(
         len(alphaValsAll_DF["alpha_vals"])
     )
@@ -85,6 +101,8 @@ def alphaValAnalysis(TAMSD_DF, mobileTracks_List, cutoffPercentLength, binWidth=
         alpha=0.7,
         edgecolor="black",
     )
+    # --Set the xlim
+    plt.xlim(xmin=-0.2, xmax=2.0)
     # --Title and labels
     ax.set_title("Alpha Value Distributions of All Tracks")
     ax.set_xlabel("Alpha Values")
@@ -105,15 +123,15 @@ def alphaValAnalysis(TAMSD_DF, mobileTracks_List, cutoffPercentLength, binWidth=
     # Go over all particles/tracks and determine alpha vals, insert into alphaValsMobile_DF
     for particle in mobileTAMSDTracks_DF.set_index("lagt"):
         # Determine cutoffPercentLength of track
-        cutoffLength = int(
+        cutoffIndex = int(
             math.floor(
                 mobileTAMSDTracks_DF[particle].count() * (cutoffPercentLength / 100)
             )
         )
         # Perform a linear fit for only these points
         cutoffSlope, cutoffIntercept = np.polyfit(
-            np.log(mobileTAMSDTracks_DF["lagt"].iloc[0:cutoffLength]),
-            np.log(mobileTAMSDTracks_DF[particle].iloc[0:cutoffLength]),
+            np.log(mobileTAMSDTracks_DF["lagt"].iloc[0:cutoffIndex]),
+            np.log(mobileTAMSDTracks_DF[particle].iloc[0:cutoffIndex]),
             1,
         )
         alphaValsMobile_DF.loc[particle] = cutoffSlope
@@ -134,10 +152,12 @@ def alphaValAnalysis(TAMSD_DF, mobileTracks_List, cutoffPercentLength, binWidth=
         list(alphaValsMobile_DF["alpha_vals"]),
         bins=alphaHistBinRange,
         weights=weights,
+        range=[0, 2.0],
         color="gray",
         alpha=0.7,
         edgecolor="black",
     )
+    # --Set the axes limits
     # --Title and labels
     ax.set_title("Alpha Value Distributions of Mobile Tracks")
     ax.set_xlabel("Alpha Values")
@@ -170,9 +190,9 @@ def cumulDistrib(
     outputPlotLagRange=10,
 ):
     # Check that lagtime limit is less than or equal to the available lags in AllTracksAllLags_DF
-    # Determine number of lags stored in AllTracksAllLags_DF
+    # --Determine number of lags stored in AllTracksAllLags_DF
     storedLags = int(((AllTracksAllLags_DF.shape[1] - 6) / 2))
-    # Check if lagtime_limit is greater than the stored number of lags
+    # --Check if lagtime_limit is greater than the stored number of lags
     if lagtime_limit > storedLags:
         # If it is, reduce the lagtime_limit to the max number of lags available
         print("NOTE: lagtime_limit greater than stored number of lags...")
@@ -210,7 +230,9 @@ def cumulDistrib(
     # Loop over all the lagtimes
     for lag in range(1, lagtime_limit + 1):
         # Grab the x,y for all particles at a lag time and square the values
-        squaredLagXY = pow(AllTracksAllLags_DF.loc[:, f"x_lag{lag}":f"y_lag{lag}"], 2)
+        squaredLagXY = np.square(
+            AllTracksAllLags_DF.loc[:, f"x_lag{lag}":f"y_lag{lag}"]
+        )
         # Insert the values into r2_lag{lag} column in the cumulDistrib_DF
         cumulDistrib_DF.loc[:, f"r2_lag{lag}"] = (
             squaredLagXY.loc[:, f"x_lag{lag}"]
@@ -251,6 +273,9 @@ def cumulDistrib(
         cumulDistrib_DF.loc[:, f"CDF_lag{lag}"] = pd.Series(CDF_valueList)
     # After the DF is generated, drop rows with all NaN values
     cumulDistrib_DF.dropna(axis=0, how="all", inplace=True)
+    print(cumulDistrib_DF)
+
+    # ! Here goes the code to bin CDF values
 
     # Setup a new empty dataframe for wValsMob_DF with the adjusted outputPlotLagRange as lagtimes in the index
     # Generate index of wValsMob_DF, will have to divide this by frameTime later
@@ -442,7 +467,7 @@ def cumulDistrib(
     x_max_wVals = x_max_wVals + (x_max_wVals * 0.05)
     y_min_wVals = y_min_wVals - axes_padding_wVals / 2
     y_max_wVals = y_max_wVals + axes_padding_wVals / 2
-    # Turn on the minor tick marks on the axes
+    # ! Turn on the minor tick marks on the axes
     plt.minorticks_on()
     # Apply the min-max axes values to the plot
     ax3.set(ylim=(y_min_wVals, y_max_wVals), xlim=(x_min_wVals, x_max_wVals))
@@ -472,7 +497,7 @@ def cumulDistrib(
     # TODO FIX LABELS FOR cdfONEmob-cdfTWOmob and cdfRandFract-cdfTWOmob plots so they have better titles and are more distinct
     # ! THE RAND FRACT FUNCTION SEEMS REALLY OFF COMPARED TO MATHEMATICA....
     # Random fractal modeled by percolation cluster
-    # -- Define static variables
+    # Define static variables
     # -- Anomalous diffusion exponent
     cdfRandFract_d_w = 0.423
     # -- Dimensionality of the diffusion
