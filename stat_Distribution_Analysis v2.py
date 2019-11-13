@@ -1,6 +1,7 @@
 import codecs
 import json
 import math
+import decimal
 
 # import os.path
 import matplotlib.pyplot as plt
@@ -188,6 +189,7 @@ def cumulDistrib(
     frameTime,
     lagtime_limit=10,
     outputPlotLagRange=10,
+    CDFbinWidth=0.00001,
 ):
     # Check that lagtime limit is less than or equal to the available lags in AllTracksAllLags_DF
     # --Determine number of lags stored in AllTracksAllLags_DF
@@ -218,7 +220,7 @@ def cumulDistrib(
     # make a list of all unique indices corresponding to particle numbers, use that list as the index for this DF.
     # ! Unused for now, but here incase we need it
     # particle_List = mobileTracksAllLags_DF.reset_index().particle.unique()
-    CDF_columns_prefix = ["r2", "CDF"]
+    CDF_columns_prefix = ["r2", "Empirical_CDF"]
     CDF_columns_suffix = ["_lag{}".format(l) for l in range(1, lagtime_limit + 1)]
     # Iterate over the prefixes and suffixes to produce the column names list
     stat_MSD = statMSDo.stat_MSD()
@@ -227,11 +229,17 @@ def cumulDistrib(
     )
     # Generate an empty DataFrame with the columns names list to store values into
     cumulDistrib_DF = pd.DataFrame(columns=CDF_columns_results)
+    # Generate an empty DataFrame with the columns names list to store values into for BINNED CDF
+    binnedCumulDistrib_DF = pd.DataFrame()
     # Loop over all the lagtimes
     for lag in range(1, lagtime_limit + 1):
+        Temp_binnedCDF_columns_results = [f"binValue_lag{lag}", f"CDF_lag{lag}"]
+        Temp_binnedCumulDistrib_DF = pd.DataFrame(
+            columns=Temp_binnedCDF_columns_results
+        )
         # Grab the x,y for all particles at a lag time and square the values
         squaredLagXY = np.square(
-            AllTracksAllLags_DF.loc[:, f"x_lag{lag}":f"y_lag{lag}"]
+            mobileTracksAllLags_DF.loc[:, f"x_lag{lag}":f"y_lag{lag}"]
         )
         # Insert the values into r2_lag{lag} column in the cumulDistrib_DF
         cumulDistrib_DF.loc[:, f"r2_lag{lag}"] = (
@@ -239,8 +247,6 @@ def cumulDistrib(
             .add(squaredLagXY.loc[:, f"y_lag{lag}"])
             .reset_index(drop=True)
         )
-        # Replace any float(0) values in that column with NaN
-        cumulDistrib_DF.loc[:, f"r2_lag{lag}"].replace(float(0), np.nan, inplace=True)
         # Sort the values in that column in ascending order and drop NaNs
         CDF_sortedTemp = cumulDistrib_DF.sort_values(f"r2_lag{lag}")
         # Reset the index and replace the designated column
@@ -251,6 +257,37 @@ def cumulDistrib(
         CDF_pointCount = cumulDistrib_DF.loc[:, f"r2_lag{lag}"].count()
         # Make an empty list to store CDF values into
         CDF_valueList = []
+        # Determine decimal places in CDFbinWidth value
+        CDFbinWidthDecimals = abs(decimal.Decimal(str(CDFbinWidth)).as_tuple().exponent)
+        # Determine the index of the last valid entry (non NaN)
+        CDF_lastValidIndex = cumulDistrib_DF.loc[:, f"r2_lag{lag}"].last_valid_index()
+        # Extract the r2_lag column of data we are interested in for the current CDF calc up to the last non NaN index
+        CDF_tempColumn = cumulDistrib_DF.loc[:CDF_lastValidIndex, f"r2_lag{lag}"]
+        # Generate a rounded up CDF_tempMax based on binWidths
+        CDF_tempMax = round(
+            math.ceil(CDF_tempColumn.max() * (1 / CDFbinWidth)) / (1 / CDFbinWidth),
+            CDFbinWidthDecimals,
+        )
+        # --Produce a list of intervals based on the CDFbinWidth up to the rounded up max value CDF_tempMax
+        CDFbinWidthList = np.arange(0, CDF_tempMax + CDFbinWidth, CDFbinWidth)
+        # --Convert the CDFbinWidthList np.array into a pd.Series
+        CDFbinWidthSeries = pd.Series(CDFbinWidthList)
+        # --Insert this series into the Temp_binnedCumulDistrib_DF
+        Temp_binnedCumulDistrib_DF[f"binValue_lag{lag}"] = CDFbinWidthSeries
+        # Instantiate an empty np.array to add CDF values to
+        binnedCDF_valueList = []
+        # Start of binned CDF Calculation
+        # Loop over each bin value
+        for binValue in CDFbinWidthList:
+            # Count how many values from CDF_tempColumn are less than or equal to the binValue
+            CDF_numLess = (np.array(CDF_tempColumn) <= binValue).sum()
+            # Divide that total by the length of CDF_tempColumn
+            CDF_value = CDF_numLess / CDF_pointCount
+            # Make an array of the CDF_values to add to the DF later
+            binnedCDF_valueList.append(CDF_value)
+        # ! START OF EMPIRICAL CDF CALCULATION
+        # ! THIS CODE DOES CDF EMPIRICALLY, BUT DOES NOT BIN THE VALUES
+        # ! Rewrite this to bin values, and maybe use an if-boolean statement to access this empirical calculation.
         # Loop over each point in the column that is not NaN, dont use index, it will unsort
         for r2_IndexValue in range(CDF_pointCount):
             # Store each lag point as a variable
@@ -261,7 +298,7 @@ def cumulDistrib(
             CDF_lastValidIndex = cumulDistrib_DF.loc[
                 :, f"r2_lag{lag}"
             ].last_valid_index()
-            # Extract the column of data we are interested in for the current CDF calc up to the last non NaN index
+            # Extract the r2_lag column of data we are interested in for the current CDF calc up to the last non NaN index
             CDF_tempColumn = cumulDistrib_DF.loc[:CDF_lastValidIndex, f"r2_lag{lag}"]
             # Comparing to the relevant column, determine how many are less than or equal to it
             CDF_numLess = (np.array(CDF_tempColumn) <= r2_to_compare).sum()
@@ -269,22 +306,20 @@ def cumulDistrib(
             CDF_value = CDF_numLess / CDF_pointCount
             # Append the value to the CDF_valueList
             CDF_valueList.append(CDF_value)
-        # Insert that value in the appropriate column in the cumulDistrib_DF
-        cumulDistrib_DF.loc[:, f"CDF_lag{lag}"] = pd.Series(CDF_valueList)
-    # After the DF is generated, drop rows with all NaN values
-    cumulDistrib_DF.dropna(axis=0, how="all", inplace=True)
-    print(cumulDistrib_DF)
+        # Insert the value in the appropriate column in the cumulDistrib_DF
+        cumulDistrib_DF.loc[:, f"Empirical_CDF_lag{lag}"] = pd.Series(CDF_valueList)
+        # ! END OF EMPIRICAL CDF CALCULATION
+        # Insert that value in the appropriate column in the TEMP_binnedCumulDistrib_DF
+        Temp_binnedCumulDistrib_DF.loc[:, f"CDF_lag{lag}"] = pd.Series(
+            binnedCDF_valueList
+        )
+        binnedCumulDistrib_DF = pd.concat(
+            [binnedCumulDistrib_DF, Temp_binnedCumulDistrib_DF], axis=1
+        )
 
-    # ! Here goes the code to bin CDF values
-    # ! Here goes the code to bin CDF values
-    # ! Here goes the code to bin CDF values
-    # ! Here goes the code to bin CDF values
-    # ! Here goes the code to bin CDF values
-    # ! Here goes the code to bin CDF values
-    # ! Here goes the code to bin CDF values
-    # ! Here goes the code to bin CDF values
-    # ! Here goes the code to bin CDF values
-    # ! Here goes the code to bin CDF values
+    # After the DF is generated, drop rows with all NaN values
+    binnedCumulDistrib_DF.dropna(axis=0, how="all", inplace=True)
+    cumulDistrib_DF.dropna(axis=0, how="all", inplace=True)
 
     # Setup a new empty dataframe for wValsMob_DF with the adjusted outputPlotLagRange as lagtimes in the index
     # Generate index of wValsMob_DF, will have to divide this by frameTime later
@@ -301,19 +336,221 @@ def cumulDistrib(
     wValsMob_DF.set_index("lagt", inplace=True)
 
     # TODO Plotter subroutine to plot the first lag and output the other plots to a save folder
+    # ! EMPIRICAL CDF PLOTTER
     # Plot the cumulative distribution function
     for plotNum in range(1, outputPlotLagRange + 1):
         # Grab the columns of with the current lagtime
-        plotCDF_DF = cumulDistrib_DF[[f"r2_lag{plotNum}", f"CDF_lag{plotNum}"]].copy()
+        plotCDF_DF = cumulDistrib_DF[
+            [f"r2_lag{plotNum}", f"Empirical_CDF_lag{plotNum}"]
+        ].copy()
         # Sort by the r2 column
         plotCDF_DF = plotCDF_DF.sort_values(
-            [f"r2_lag{plotNum}", f"CDF_lag{plotNum}"], ascending=[True, False]
+            [f"r2_lag{plotNum}", f"Empirical_CDF_lag{plotNum}"], ascending=[True, False]
         )
         # Remove any trailing NaNs from the DF
         plotCDF_DF.dropna(axis=0, how="all", inplace=True)
         # Plot the two columns with r2 as 'x' and CDF as 'y'
         # Gather the x y data
         CDF_x_data = plotCDF_DF[f"r2_lag{plotNum}"]
+        CDF_y_data = plotCDF_DF[f"Empirical_CDF_lag{plotNum}"]
+        # ! TEST_1 Start --A possibly better way to get the fit and residuals?
+        # ! Left here for future reference
+        # TEST_1_modCDFoneMOB = Model(func_cdfONEmob)
+        # TEST_1_modCDFtwoMOB = Model(func_cdfTWOmob)
+        # TEST_1_modONEparams = TEST_1_modCDFoneMOB.make_params(d=0.5)
+        # TEST_1_modTWOparams = TEST_1_modCDFtwoMOB.make_params(w=0.5, d_1=0.01, d_2=0.1)
+        # TEST_1_modONEresults = TEST_1_modCDFoneMOB.fit(CDF_y_data, TEST_1_modONEparams, x=CDF_x_data)
+        # TEST_1_modTWOresults = TEST_1_modCDFtwoMOB.fit(CDF_y_data, TEST_1_modTWOparams, x=CDF_x_data)
+        # print(TEST_1_modONEresults.fit_report())
+        # print(TEST_1_modTWOresults.fit_report())
+        # ! TEST_1 End
+        # Generate fitted curve and residuals for cdfONEmob
+        CDF1_popt, CDF1_pcov = curve_fit(func_cdfONEmob, CDF_x_data, CDF_y_data)
+        CDF1_residuals = CDF_y_data - func_cdfONEmob(CDF_x_data, CDF1_popt)
+        # Generate fitted curve and residuals for cdfTWOmob
+        CDF2_popt, CDF2_pcov = curve_fit(
+            func_cdfTWOmob, CDF_x_data, CDF_y_data, p0=[0.5, 0.01, 0.1]
+        )
+        # Weighting Factor determination
+        # Determine the stdDev for the wValue perr = np.sqrt(np.diag(pcov))
+        CDF2_popt_stdErr = np.sqrt(np.diag(CDF2_pcov))
+        # Determine the current lagtime being evaluated
+        wVal_lag = round(plotNum / frameTime, 1)
+        # Evaluate the w value based on d_2 > d_1 adjust accordingly
+        if CDF2_popt[2] < CDF2_popt[1]:
+            # If d_2 < d_1, use 1-wVal instead of wVal
+            wValsMob_DF.loc[wVal_lag, "wVal"] = 1 - CDF2_popt[0]
+        else:
+            # if d_2 > d_1, use wVal
+            wValsMob_DF.loc[wVal_lag, "wVal"] = CDF2_popt[0]
+        wValsMob_DF.loc[wVal_lag, "wVal"] = CDF2_popt[0]
+        # Insert the stdDev value for the corresponding wVal
+        wValsMob_DF.loc[wVal_lag, "wVal_stdErr"] = CDF2_popt_stdErr[0]
+        CDF2_residuals = CDF_y_data - func_cdfTWOmob(CDF_x_data, *CDF2_popt)
+        print(wValsMob_DF)
+
+        # Setup the new figure for CDF plots
+        fig, (ax0, ax1) = plt.subplots(
+            2, 1, figsize=(6, 9), gridspec_kw={"height_ratios": [4, 8]}, sharex=True
+        )
+        # Plot original data
+        ax1.plot(CDF_x_data, CDF_y_data, label="Data", color="black")
+        # Plot the curve for cdfONEmob
+        ax1.step(
+            CDF_x_data,
+            func_cdfONEmob(CDF_x_data, *CDF1_popt),
+            color="C0",
+            label="Single",
+            linestyle="dashed",
+        )
+        # Plot the curve for cdfTWOmob
+        ax1.step(
+            CDF_x_data,
+            func_cdfTWOmob(CDF_x_data, *CDF2_popt),
+            color="C1",
+            label="Double",
+            linestyle="dashed",
+        )
+        # Determine current lagTime rounded to 2 decimal places
+        currLagTime = round(plotNum / frameTime, 2)
+        # Set the label for the x-axis and y-axis
+        ax1.set_xlabel(r"$r^2$ ($\mu$m$^2$)", fontsize=15)
+        ax1.set_ylabel(
+            r"CDF($r^2$, t$_{{lag}}$={:0.2f}s)".format(currLagTime), fontsize=15
+        )
+        # Set the ticks to be inside the plot area
+        ax1.tick_params(which="both", direction="in")
+        # Set the right-side y-axis tick marks with no numbers
+        ax1.yaxis.set_ticks_position("both")
+        ax1.xaxis.set_ticks_position("both")
+        # Set the axes scaling
+        ax1.set_xscale("log")
+        # Set location of legend on plot
+        ax1.legend(loc="upper left")
+        # Set the min/max values for the x, y axes
+        x_min = 0.0001
+        x_max = 0.1
+        y_min_CDF = 0
+        y_max_CDF = 1
+        # Padding value for even adjustments
+        axes_padding_Xaxis = 0.1
+        axes_padding_CDF_Yaxis = 0.1
+        # Adjust any axes below with padding, comment out what you dont want or need
+        x_min = x_min - (x_min * axes_padding_Xaxis)
+        x_max = x_max + (x_max * axes_padding_Xaxis)
+        y_min_CDF = y_min_CDF - (y_min_CDF * axes_padding_CDF_Yaxis)
+        y_max_CDF = y_max_CDF + (y_max_CDF * axes_padding_CDF_Yaxis)
+        # Apply the min-max axes values to the plot
+        ax1.set(ylim=(y_min_CDF, y_max_CDF), xlim=(x_min, x_max))
+
+        # Plot the CDF1_residuals
+        ax0.plot(
+            CDF_x_data, CDF1_residuals, color="C0", linestyle="dashed", label="Single"
+        )
+        # Plot the CDF2_residuals
+        ax0.plot(
+            CDF_x_data, CDF2_residuals, color="C1", linestyle="dashed", label="Double"
+        )
+        # Set the label for the y-axis
+        ax0.set_ylabel(r"Residuals", fontsize=15, labelpad=1)
+        # Set the ticks to be inside the plot area
+        ax0.tick_params(which="both", direction="in")
+        # Set the right-side y-axis tick marks with no numbers
+        ax0.yaxis.set_ticks_position("both")
+        ax0.xaxis.set_ticks_position("both")
+        # Plot a horizontal line at y=0 on the residuals plot for reference
+        ax0.axhline(y=0.0, color="black", alpha=0.7, linestyle="dashed")
+        ax0.legend(loc="upper left")
+        # Adjust the y-axes for this plot here
+        y_min_resid = -0.10
+        y_max_resid = 0.10
+        # Padding value for even adjustments
+        axes_padding_resid_Yaxis = 0.1
+        y_min_resid = y_min_resid + (y_min_resid * axes_padding_resid_Yaxis)
+        y_max_resid = y_max_resid + (y_max_resid * axes_padding_resid_Yaxis)
+        # Apply the min-max axes to the plot
+        ax0.set(ylim=(y_min_resid, y_max_resid))
+
+        # Set the title for the window
+        fig.canvas.set_window_title(f"Figure {plotNum} of {outputPlotLagRange}")
+        # Set a title for the plot
+        fig.suptitle(
+            r"Empirical CDF Plots with Residuals at Lag {:0.2f}s".format(currLagTime),
+            y=0.95,
+            fontsize=18,
+        )
+
+        # Adjust the vertical distance between the subplots
+        plt.subplots_adjust(hspace=0.05)
+
+        # Show the plot
+        plt.show()
+
+    # Plot CDF Weighting factors
+    fig2, ax3 = plt.subplots(1, 1, figsize=(10, 5))
+    # Plot wVals vs lagt, set label for legend
+    ax3.plot(wValsMob_DF.index, wValsMob_DF["wVal"], "o", label=r"CDF w Values")
+    # Plot a horizontal line at y=0.5 on the wVals plot for reference
+    ax3.axhline(y=0.5, color="black", alpha=0.7, linestyle="dashed")
+    # Set the label for the x-axis and y-axis
+    ax3.set_xlabel(r"Lag Time (s)", fontsize=15)
+    ax3.set_ylabel(r"CDF Weighting Factor, w", fontsize=15)
+    # Set the ticks to be inside the plot area
+    ax3.tick_params(which="both", direction="in")
+    # Set the right-side y-axis tick marks with no numbers
+    ax3.yaxis.set_ticks_position("both")
+    ax3.xaxis.set_ticks_position("both")
+    # Set the axes scaling
+    ax3.set_xscale("linear")
+    ax3.set_yscale("linear")
+    # Set the min/max values for the x, y axes
+    x_min_wVals = 0.0
+    x_max_wVals = wValsMob_DF.index[-1]
+    y_min_wVals = 0.0
+    y_max_wVals = 1.0
+    # Padding value for even adjustments
+    axes_padding_wVals = 0.1
+    # Adjust any axes below with padding, comment out what you dont want or need
+    # x_min_wVals = x_min_wVals - (x_max_wVals * 0.05)
+    x_max_wVals = x_max_wVals + (x_max_wVals * 0.05)
+    y_min_wVals = y_min_wVals - axes_padding_wVals / 2
+    y_max_wVals = y_max_wVals + axes_padding_wVals / 2
+    # Turn on the minor tick marks on the axes
+    plt.minorticks_on()
+    # Apply the min-max axes values to the plot
+    ax3.set(ylim=(y_min_wVals, y_max_wVals), xlim=(x_min_wVals, x_max_wVals))
+    # Set the x-axis major ticks to be multiples of 2 * frameTime
+    ax3.xaxis.set_major_locator(MultipleLocator(2 * frameTime / 100))
+    # Set the x-axis minor ticks to be multiples of frameTime
+    ax3.xaxis.set_minor_locator(AutoMinorLocator(2))
+    # Set the title for the window
+    fig2.canvas.set_window_title("CDF Weighting Factor vs Lag Time")
+    # Set a title for the plot
+    fig2.suptitle(
+        r"Mobile CDF Weighting Factors vs Lag Time up to {}".format(
+            wValsMob_DF.index[-1]
+        ),
+        y=0.95,
+        fontsize=18,
+    )
+    # Show the plot
+    plt.show()
+    # ! BINNED CDF PLOTTER
+    # Plot the cumulative distribution function
+    for plotNum in range(1, outputPlotLagRange + 1):
+        # Grab the columns of with the current lagtime
+        plotCDF_DF = binnedCumulDistrib_DF[
+            [f"binValue_lag{plotNum}", f"CDF_lag{plotNum}"]
+        ].copy()
+        # Sort by the binValue_lag column
+        plotCDF_DF = plotCDF_DF.sort_values(
+            [f"binValue_lag{plotNum}", f"CDF_lag{plotNum}"], ascending=[True, False]
+        )
+        # Remove any trailing NaNs from the DF
+        plotCDF_DF.dropna(axis=0, how="all", inplace=True)
+        # Plot the two columns with r2 as 'x' and CDF as 'y'
+        # Gather the x y data
+        CDF_x_data = plotCDF_DF[f"binValue_lag{plotNum}"]
         CDF_y_data = plotCDF_DF[f"CDF_lag{plotNum}"]
         # ! TEST_1 Start --A possibly better way to get the fit and residuals?
         # ! Left here for future reference
@@ -436,7 +673,7 @@ def cumulDistrib(
         fig.canvas.set_window_title(f"Figure {plotNum} of {outputPlotLagRange}")
         # Set a title for the plot
         fig.suptitle(
-            r"CDF Plots with Residuals at Lag {:0.2f}s".format(currLagTime),
+            r"Binned CDF Plots with Residuals at Lag {:0.2f}s".format(currLagTime),
             y=0.95,
             fontsize=18,
         )
@@ -476,7 +713,7 @@ def cumulDistrib(
     x_max_wVals = x_max_wVals + (x_max_wVals * 0.05)
     y_min_wVals = y_min_wVals - axes_padding_wVals / 2
     y_max_wVals = y_max_wVals + axes_padding_wVals / 2
-    # ! Turn on the minor tick marks on the axes
+    # Turn on the minor tick marks on the axes
     plt.minorticks_on()
     # Apply the min-max axes values to the plot
     ax3.set(ylim=(y_min_wVals, y_max_wVals), xlim=(x_min_wVals, x_max_wVals))
