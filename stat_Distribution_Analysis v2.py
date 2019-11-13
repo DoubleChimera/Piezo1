@@ -918,7 +918,7 @@ if __name__ == "__main__":
     localErrorLagTime = 1.0
 
     # Range of data to fit to a line
-    # bounding indices for tracks to fit, select linear region
+    # bounding indices for frames to fit, select linear region
     fit_range = [1, 20]
     # * -----END OF USER INPUTS----- * #
 
