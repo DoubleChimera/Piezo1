@@ -305,7 +305,7 @@ class stat_MSD(object):
         ids = []
         msds = []
         self.tracks = tracks
-        # ! For a set of tracks, square the displacements from the starting position and then take the mean over all the tracks
+        # ! Only perform this function up to half the track length
         # Set pos_columns if they don't exist
         if pos_columns is None:
             pos_columns = ["x", "y"]
@@ -330,7 +330,7 @@ class stat_MSD(object):
             msds[particle_index][result_columns] = (
                 msds[particle_index].loc[:, "x":"y"] ** 2
             )
-            # Then we need to add up all the rows of x^2 and y^2 with the same frame times
+            # Then we need to add up all the rows of x^2 and y^2 with the same frame times, # ! up to half the trajectory length
             msdsSquareSums = msds[particle_index][result_columns].sum(
                 axis=1, skipna=True
             )

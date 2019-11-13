@@ -179,7 +179,7 @@ def func_cdfTWOmob(x, w, d_1, d_2):
 
 
 # Random walk on a fractal (Random Fractal Modeled by Percolation Cluster)
-def func_cdfRandFract(x, d_f, dim, d_w, u, t):
+def func_cdfRandFract(x, d_f, t, dim, d_w, u):
     return (x ** (d_f - dim) / t ** (d_f / d_w)) * np.exp(-(x / (t ** (1 / d_w))) ** u)
 
 
@@ -320,7 +320,6 @@ def cumulDistrib(
     # After the DF is generated, drop rows with all NaN values
     binnedCumulDistrib_DF.dropna(axis=0, how="all", inplace=True)
     cumulDistrib_DF.dropna(axis=0, how="all", inplace=True)
-
     # Setup a new empty dataframe for wValsMob_DF with the adjusted outputPlotLagRange as lagtimes in the index
     # Generate index of wValsMob_DF, will have to divide this by frameTime later
     wValsMob_index = np.linspace(
@@ -387,7 +386,6 @@ def cumulDistrib(
         # Insert the stdDev value for the corresponding wVal
         wValsMob_DF.loc[wVal_lag, "wVal_stdErr"] = CDF2_popt_stdErr[0]
         CDF2_residuals = CDF_y_data - func_cdfTWOmob(CDF_x_data, *CDF2_popt)
-        print(wValsMob_DF)
 
         # Setup the new figure for CDF plots
         fig, (ax0, ax1) = plt.subplots(
@@ -740,7 +738,6 @@ def cumulDistrib(
     # !     --CTRW
     # !      --Any Others?!
 
-    # TODO FIX LABELS FOR cdfONEmob-cdfTWOmob and cdfRandFract-cdfTWOmob plots so they have better titles and are more distinct
     # ! THE RAND FRACT FUNCTION SEEMS REALLY OFF COMPARED TO MATHEMATICA....
     # Random fractal modeled by percolation cluster
     # Define static variables
@@ -750,29 +747,32 @@ def cumulDistrib(
     cdfRandFract_dim = 2.0
     # -- u = 1.65 +- 0.1 (from a fit, see reference --Mathematica)
     cdfRandFract_u = 1.65
-    # -- t -> 1.0, defined in for loop since it varies per sample
+    # -- Limit as t -> 1
     cdfRandFract_t = 1.0
     for plotNum in range(1, outputPlotLagRange + 1):
         # Grab the columns of with the current lagtime
-        plotCDF_DF = cumulDistrib_DF[[f"r2_lag{plotNum}", f"CDF_lag{plotNum}"]].copy()
-        # Sort by the r2 column
+        plotCDF_DF = binnedCumulDistrib_DF[
+            [f"binValue_lag{plotNum}", f"CDF_lag{plotNum}"]
+        ].copy()
+        # Sort by the binValue column
         plotCDF_DF = plotCDF_DF.sort_values(
-            [f"r2_lag{plotNum}", f"CDF_lag{plotNum}"], ascending=[True, False]
+            [f"binValue_lag{plotNum}", f"CDF_lag{plotNum}"], ascending=[True, False]
         )
         # Remove any trailing NaNs from the DF
         plotCDF_DF.dropna(axis=0, how="all", inplace=True)
         # Plot the two columns with r2 as 'x' and CDF as 'y'
         # Gather the x y data
-        CDF_x_data = plotCDF_DF[f"r2_lag{plotNum}"]
+        CDF_x_data = plotCDF_DF[f"binValue_lag{plotNum}"]
         CDF_y_data = plotCDF_DF[f"CDF_lag{plotNum}"]
         CDF_sqrt_y_data = np.sqrt(CDF_y_data)
         # Make a custom CDF_RandFract function that uses the constants we defined, i.e. cdfRandFract_d_w, cdfRandFract_dim, cdfRandFract_u, cdfRandFract_t
         func_cdfConstRandFract = lambda x, d_f: func_cdfRandFract(
-            x, d_f, cdfRandFract_dim, cdfRandFract_d_w, cdfRandFract_u, cdfRandFract_t
+            x, d_f, cdfRandFract_t, cdfRandFract_dim, cdfRandFract_d_w, cdfRandFract_u
         )
+        param_bounds = ([-np.inf, -np.inf, 1], [np.inf, np.inf, np.inf])
         # Generate fitted curve and residual for func_cdfConstRandFract
         CDF_RandFract_popt, CDF_RandFract_pcov = curve_fit(
-            func_cdfConstRandFract, CDF_x_data, CDF_sqrt_y_data
+            func_cdfConstRandFract, CDF_x_data, CDF_sqrt_y_data, bounds=param_bounds
         )
         # Generate the residuals for the fit to the func_cdfConstRandFract function
         CDF_RandFract_residuals = CDF_y_data - func_cdfConstRandFract(
@@ -819,7 +819,7 @@ def cumulDistrib(
         ax1.yaxis.set_ticks_position("both")
         ax1.xaxis.set_ticks_position("both")
         # Set the axes scaling
-        ax1.set_xscale("linear")
+        ax1.set_xscale("log")
         # Set location of legend on plot
         ax1.legend(loc="upper left")
         # Set the min/max values for the x, y axes
@@ -863,7 +863,7 @@ def cumulDistrib(
         ax0.legend(loc="upper left")
         # Adjust the y-axes for this plot here
         y_min_resid = -0.10
-        y_max_resid = 0.10
+        y_max_resid = 0.20
         # Padding value for even adjustments
         axes_padding_resid_Yaxis = 0.1
         y_min_resid = y_min_resid + (y_min_resid * axes_padding_resid_Yaxis)

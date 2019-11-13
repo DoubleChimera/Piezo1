@@ -163,7 +163,7 @@ def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List, frameTime, fit_range):
     # Setup a mobileTrack dataframe
     mobileTAMSDTracks_DF = TAMSD_DF.loc[:, mobileTracks_List]
     # get half the track lengths
-    mobileTAMSD_range = int(math.floor(mobileTAMSDTracks_DF.count().max() / 2))
+    mobileTAMSD_range = int(math.ceil(mobileTAMSDTracks_DF.count().max() / 2))
     mobileTAMSD_half_indices = np.round(
         mobileTAMSDTracks_DF.index[0:mobileTAMSD_range], 3
     )
@@ -380,10 +380,17 @@ def plot_MobileTAMSD(TAMSD_DF, mobileTracks_List, frameTime, fit_range):
 
 
 def genMobileEAMSDTracks(selectedTracks_DF, mobileTrack_List, savePath):
+
     mobileTrack_DF = pd.DataFrame()
     for particle, track in selectedTracks_DF.reset_index(drop=True).groupby("particle"):
         if particle in mobileTrack_List:
-            mobileTrack_DF = mobileTrack_DF.append(track, ignore_index=True)
+            # Determine half that track's length (rounded to floor)
+            trackHalfLength = math.floor(len(track) / 2)
+            # Insert half the track length for each particle into mobileTrack_DF
+            mobileTrack_DF = mobileTrack_DF.append(
+                track[0 : trackHalfLength + 1], ignore_index=True
+            )
+    # ! Truncate all the particle tracks to half length (ceiling)
     return mobileTrack_DF
     # reindex by particle, if particle is in mobileList, add to a new DF, after all additions reindex and output
 
@@ -422,8 +429,8 @@ def plot_AvgMobileTA_EA_MSD(
     # Determine iloc of the TAMSD plotting limits
     startPlotIndex = mobileEAMSD_DF.index.get_loc(avgTAMSD_DF.index[0])
     endPlotIndex = mobileEAMSD_DF.index.get_loc(avgTAMSD_DF.index[-1]) + 1
-
     # Plot EAMSD, set label for legend
+    print(mobileEAMSD_DF["eamsd"].loc[avgTAMSD_DF.index[0] : avgTAMSD_DF.index[-1]])
     ax.plot(
         mobileEAMSD_DF.index[startPlotIndex:endPlotIndex],
         mobileEAMSD_DF["eamsd"].loc[avgTAMSD_DF.index[0] : avgTAMSD_DF.index[-1]],
@@ -432,7 +439,6 @@ def plot_AvgMobileTA_EA_MSD(
         linewidth=3,
         label=r"$\langle$MSD$\rangle$$_{ens}$",
     )
-
     plt.fill_between(
         mobileEAMSD_DF.index[startPlotIndex:endPlotIndex],
         mobileEAMSD_DF["eamsd"].loc[avgTAMSD_DF.index[0] : avgTAMSD_DF.index[-1]]
